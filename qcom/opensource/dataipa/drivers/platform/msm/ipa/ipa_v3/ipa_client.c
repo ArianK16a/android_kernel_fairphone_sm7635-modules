@@ -447,7 +447,7 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 				res = ipa3_iommu_map(smmu_domain, va, phys,
 					len, IOMMU_READ | IOMMU_WRITE);
 				if (res) {
-					IPAERR("Fail to map pa=%pa, va 0x%X\n",
+					IPAERR("Fail to map pa=%pa, va 0x%lX\n",
 						&phys, va);
 					return -EINVAL;
 				}
@@ -478,7 +478,7 @@ int ipa3_smmu_map_peer_buff(u64 iova, u32 size, bool map, struct sg_table *sgt,
 				res = iommu_unmap(smmu_domain, va, len);
 				if (res != len) {
 					IPAERR(
-						"Fail to unmap pa=%pa, va 0x%X, res %d\n"
+						"Fail to unmap pa=%pa, va 0x%lX, res %d\n"
 						, &phys, va, res);
 					ret = -EINVAL;
 				}
@@ -956,7 +956,7 @@ int ipa3_xdci_start(u32 clnt_hdl, u8 xferrscidx, bool xferrscidx_valid)
 				HOLB_MONITOR_MASK,
 				holb_max_cnt, IPA_EE_AP);
 		if (result)
-			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+			IPAERR("Add HOLB monitor failed for gsi ch %lu\n",
 					ep->gsi_chan_hdl);
 	}
 
@@ -966,10 +966,10 @@ int ipa3_xdci_start(u32 clnt_hdl, u8 xferrscidx, bool xferrscidx_valid)
 		gsi_res = gsi_enable_flow_control_ee(ep->gsi_chan_hdl, 0,
 									&code);
 		if (gsi_res == GSI_STATUS_SUCCESS) {
-			IPADBG("flow control sussess gsi ch %d with code %d\n",
+			IPADBG("flow control success gsi ch %lu with code %d\n",
 					ep->gsi_chan_hdl, code);
 		} else {
-			IPADBG("failed to flow control gsi ch %d code %d\n",
+			IPADBG("failed to flow control gsi ch %lu code %d\n",
 					ep->gsi_chan_hdl, code);
 		}
 	}
@@ -1444,10 +1444,10 @@ int ipa3_start_stop_client_prod_gsi_chnl(enum ipa_client_type client,
 			result = gsi_enable_flow_control_ee(ep->gsi_chan_hdl,
 								0, &code);
 			if (result == GSI_STATUS_SUCCESS) {
-				IPADBG("flow control sussess ch %d code %d\n",
+				IPADBG("flow control success ch %lu code %d\n",
 						ep->gsi_chan_hdl, code);
 			} else {
-				IPADBG("failed to flow control ch %d code %d\n",
+				IPADBG("failed to flow control ch %lu code %d\n",
 						ep->gsi_chan_hdl, code);
 			}
 		} else
@@ -1832,7 +1832,7 @@ start_dl_and_exit:
 			HOLB_MONITOR_MASK, holb_max_cnt,
 			IPA_EE_AP);
 		if (res)
-			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+			IPAERR("Add HOLB monitor failed for gsi ch %lu\n",
 					dl_ep->gsi_chan_hdl);
 	}
 	ipa3_start_gsi_debug_monitor(dl_clnt_hdl);
@@ -1887,7 +1887,7 @@ int ipa3_start_gsi_channel(u32 clnt_hdl)
 				HOLB_MONITOR_MASK,
 				holb_max_cnt, IPA_EE_AP);
 		if (res)
-			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+			IPAERR("Add HOLB monitor failed for gsi ch %lu\n",
 					ep->gsi_chan_hdl);
 	}
 	ipa3_start_gsi_debug_monitor(clnt_hdl);
@@ -1954,7 +1954,7 @@ int ipa3_xdci_resume(u32 ul_clnt_hdl, u32 dl_clnt_hdl, bool is_dpl)
 				HOLB_MONITOR_MASK,
 				holb_max_cnt, IPA_EE_AP);
 		if (result)
-			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+			IPAERR("Add HOLB monitor failed for gsi ch %lu\n",
 					dl_ep->gsi_chan_hdl);
 	}
 	ipa3_start_gsi_debug_monitor(dl_clnt_hdl);

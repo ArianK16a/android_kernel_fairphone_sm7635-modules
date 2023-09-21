@@ -71,3 +71,8 @@ config NCM_IPA
         tristate "Short description of export NCM_IPA"
         help
           Long description of export NCM_IPA
+
+config IPA3
+        tristate "Short description of export IPA3"
+        help
+          Long description of export IPA3
