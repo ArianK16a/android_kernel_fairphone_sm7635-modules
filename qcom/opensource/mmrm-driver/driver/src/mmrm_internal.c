@@ -6,6 +6,8 @@
 
 #include <linux/types.h>
 #include <linux/of_platform.h>
+#include <linux/of.h>
+//#include <linux/platform_device.h>
 
 #include "mmrm_internal.h"
 #include "mmrm_debug.h"

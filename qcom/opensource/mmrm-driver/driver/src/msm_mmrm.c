@@ -9,6 +9,7 @@
 #include <linux/slab.h>
 #include <linux/soc/qcom/msm_mmrm.h>
 #include <linux/fs.h>
+#include <linux/of.h>
 
 #include "mmrm_internal.h"
 #include "mmrm_debug.h"

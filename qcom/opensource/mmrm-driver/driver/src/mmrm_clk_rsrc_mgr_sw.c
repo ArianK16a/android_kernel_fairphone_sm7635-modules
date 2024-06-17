@@ -325,7 +325,7 @@ static struct mmrm_client *mmrm_sw_clk_client_register(
 
 	/* copy the entries provided by client */
 	tbl_entry->client = clk_client;
-	strlcpy(tbl_entry->name, clk_desc.name, MMRM_CLK_CLIENT_NAME_SIZE);
+	strscpy(tbl_entry->name, clk_desc.name, MMRM_CLK_CLIENT_NAME_SIZE);
 	tbl_entry->clk = clk_desc.clk;
 	tbl_entry->pri = priority;
 	tbl_entry->pvt_data = pvt_data;
