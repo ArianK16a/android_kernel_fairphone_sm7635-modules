@@ -29,6 +29,10 @@ define_modules("seraph", "consolidate")
 
 define_modules("seraph", "gki")
 
+define_modules("fps", "consolidate")
+
+define_modules("fps", "gki")
+
 package(
     default_visibility = [
         "//visibility:public",
