@@ -54,6 +54,14 @@ ddk_headers(
 )
 
 ddk_headers(
+    name = "fps_headers",
+    hdrs = glob([
+      "driver/platform/volcano/inc/*.h",
+    ]),
+    includes = ["driver/platform/volcano/inc"]
+)
+
+ddk_headers(
     name = "vidc_headers",
     hdrs = glob([
       "driver/vidc/inc/*.h",
@@ -66,7 +74,7 @@ ddk_headers(
 ddk_headers(
     name = "video_driver_headers",
     # hdrs = [":pineapple_configs", "uapi_headers", "pineapple_headers", "iris33_headers", "vidc_headers"]
-    hdrs = [":uapi_headers", "pineapple_headers", "cliffs_headers", "iris33_headers", "volcano_headers", "iris2_headers", "vidc_headers"]
+    hdrs = [":uapi_headers", "pineapple_headers", "cliffs_headers", "iris33_headers", "volcano_headers", "iris2_headers", "vidc_headers", "fps_headers"]
 )
 
 load(":target.bzl", "define_target_modules")
