@@ -13,8 +13,8 @@ _default_module_enablement_list = [
     "wlan_firmware_service",
 ]
 
-_cnss2_enabled_target = ["seraph", "neo-la", "anorak", "niobe", "pineapple", "sun", "sdxkova", "sa510m", "autogvm", "autoghgvm"]
-_icnss2_enabled_target = ["blair", "pineapple", "monaco", "pitti", "volcano"]
+_cnss2_enabled_target = ["seraph", "neo-la", "anorak", "niobe", "pineapple", "fps", "sun", "sdxkova", "sa510m", "autogvm", "autoghgvm"]
+_icnss2_enabled_target = ["blair", "pineapple", "monaco", "pitti", "volcano", "fps"]
 
 def _get_module_list(target, variant):
     tv = "{}_{}".format(target, variant)
