@@ -28,3 +28,6 @@ ddk_headers(
 
 load(":target.bzl", "define_pineapple")
 define_pineapple()
+
+load(":target.bzl", "define_fps")
+define_fps()
