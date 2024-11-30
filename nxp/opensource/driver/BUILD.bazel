@@ -12,3 +12,6 @@ define_modules("pitti", "gki")
 
 define_modules("volcano", "consolidate")
 define_modules("volcano", "gki")
+
+define_modules("fps", "consolidate")
+define_modules("fps", "gki")

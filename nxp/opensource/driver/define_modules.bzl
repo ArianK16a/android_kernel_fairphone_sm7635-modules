@@ -6,7 +6,7 @@ def define_modules(target, variant):
     copts = []
     deps = ["//msm-kernel:all_headers"]
 
-    if target == "pineapple":
+    if target in ["pineapple", "fps"]:
        copts.append("-DNFC_SECURE_PERIPHERAL_ENABLED")
        deps += ["//vendor/qcom/opensource/securemsm-kernel:smcinvoke_kernel_headers",
                 "//vendor/qcom/opensource/securemsm-kernel:{}_smcinvoke_dlkm".format(tv)
