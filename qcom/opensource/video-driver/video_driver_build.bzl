@@ -121,6 +121,8 @@ def define_lunch_target_variant_modules(target, variant, registry, modules, lunc
         print("dist_target_name: " + dist_target_name)
         data = [":{}_video_driver_modules".format(kernel_build)]
         config_options = ["CONFIG_MSM_VIDC_{}".format(target.upper())]
+    if target == "fps":
+        config_options = ["CONFIG_MSM_VIDC_VOLCANO"]
 
 
     modules = [registry.get(module_name) for module_name in modules]
