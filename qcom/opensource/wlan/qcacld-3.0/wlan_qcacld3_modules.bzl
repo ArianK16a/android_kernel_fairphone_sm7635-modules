@@ -26,6 +26,12 @@ _target_chipset_map = {
         "qca6750",
         "adrastea",
     ],
+    "fps": [
+        "peach-v2",
+        "peach",
+        "kiwi-v2",
+        "qca6750",
+    ],
 }
 
 _chipset_hw_map = {
