@@ -41,3 +41,7 @@ define_modules("anorak", "gki")
 define_modules("neo-la", "consolidate")
 
 define_modules("neo-la", "gki")
+
+define_modules("fps", "consolidate")
+
+define_modules("fps", "gki")
