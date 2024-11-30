@@ -25,7 +25,7 @@ def _define_module(target, variant, lunch_target=None):
         "//vendor/qcom/opensource/mmrm-driver:{}_mmrm_driver".format(tv),
     ]
 
-    if target == "pineapple":
+    if target in ["pineapple", "fps"]:
         deps.extend([
             "//vendor/qcom/opensource/synx-kernel:synx_headers",
             "//vendor/qcom/opensource/synx-kernel:{}_modules".format(tv),

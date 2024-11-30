@@ -19,9 +19,12 @@ LOCAL_MODULE_DDK_SUBTARGET_REGEX := "camera.*"
 ifeq ($(TARGET_BOARD_PLATFORM), volcano)
   LOCAL_MODULE_DDK_SUBTARGET_REGEX := "$(TARGET_BOARD_PLATFORM)_camera.*"
 endif
+ifeq ($(filter $(TARGET_BASE_PRODUCT),$(T2M_CUSTO_PRODUCTS)),$(TARGET_BASE_PRODUCT))
+  LOCAL_MODULE_DDK_SUBTARGET_REGEX := "camera.*"
+endif
 
 # List of board platforms for which MMRM driver API should be enabled
-MMRM_BOARDS := taro parrot kalama pineapple crow volcano
+MMRM_BOARDS := taro parrot kalama pineapple crow volcano fps
 
 # List of board platforms for which Synx V2 vendor driver API should be enabled
 SYNX_VENDOR_BOARDS := pineapple
