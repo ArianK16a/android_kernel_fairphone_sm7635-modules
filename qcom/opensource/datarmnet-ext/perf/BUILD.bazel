@@ -16,3 +16,7 @@ define_perf("pitti", "gki")
 define_perf("volcano", "consolidate")
 
 define_perf("volcano", "gki")
+
+define_perf("fps", "consolidate")
+
+define_perf("fps", "gki")

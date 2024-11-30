@@ -20,3 +20,7 @@ define_wlan("pitti", "gki")
 define_wlan("volcano", "consolidate")
 
 define_wlan("volcano", "gki")
+
+define_wlan("fps", "consolidate")
+
+define_wlan("fps", "gki")

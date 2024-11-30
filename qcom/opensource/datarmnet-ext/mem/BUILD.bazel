@@ -21,6 +21,10 @@ define_mem("volcano", "consolidate")
 
 define_mem("volcano", "gki")
 
+define_mem("fps", "consolidate")
+
+define_mem("fps", "gki")
+
 package(
 	default_visibility = [
 	"//visibility:public", ],
