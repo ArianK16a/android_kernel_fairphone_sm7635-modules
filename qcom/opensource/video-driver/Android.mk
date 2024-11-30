@@ -40,6 +40,9 @@ LOCAL_MODULE_DDK_SUBTARGET_REGEX := "video.*"
 ifeq ($(TARGET_BOARD_PLATFORM), volcano)
   LOCAL_MODULE_DDK_SUBTARGET_REGEX := "$(TARGET_BOARD_PLATFORM)_video.*"
 endif
+ifeq ($(filter $(TARGET_BASE_PRODUCT),$(T2M_CUSTO_PRODUCTS)),$(TARGET_BASE_PRODUCT))
+  LOCAL_MODULE_DDK_SUBTARGET_REGEX := "video.*"
+endif
 LOCAL_MODULE_KO_DIRS      := msm_video/msm_video.ko
 
 LOCAL_REQUIRED_MODULES    := mmrm-module-symvers
