@@ -93,7 +93,7 @@ def external_deps(target, variant):
     defconfigs = []
 
     # Add msm_hw_fence in the dependency and defconfig lists for targets that use it
-    if target in [ "pineapple" ]:
+    if target in ["pineapple", "fps"]:
         deplist = deplist + [
             "//vendor/qcom/opensource/mm-drivers/hw_fence:{}_msm_hw_fence".format(tv)
             ]
