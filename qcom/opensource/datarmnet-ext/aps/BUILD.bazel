@@ -12,3 +12,7 @@ define_aps("pitti", "gki")
 define_aps("volcano", "consolidate")
 
 define_aps("volcano", "gki")
+
+define_aps("fps", "consolidate")
+
+define_aps("fps", "gki")

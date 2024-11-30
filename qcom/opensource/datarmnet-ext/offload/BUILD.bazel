@@ -16,3 +16,7 @@ define_offload("pitti", "gki")
 define_offload("volcano", "consolidate")
 
 define_offload("volcano", "gki")
+
+define_offload("fps", "consolidate")
+
+define_offload("fps", "gki")

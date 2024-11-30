@@ -12,3 +12,7 @@ define_sch("pitti", "gki")
 define_sch("volcano", "consolidate")
 
 define_sch("volcano", "gki")
+
+define_sch("fps", "consolidate")
+
+define_sch("fps", "gki")
