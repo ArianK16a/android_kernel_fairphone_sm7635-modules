@@ -12,6 +12,9 @@ LOCAL_MODULE_DDK_SUBTARGET_REGEX := "display_drivers*"
 ifeq ($(TARGET_BOARD_PLATFORM), volcano)
   LOCAL_MODULE_DDK_SUBTARGET_REGEX := "$(TARGET_BOARD_PLATFORM)_display_drivers.*"
 endif
+ifeq ($(filter $(TARGET_BASE_PRODUCT),$(T2M_CUSTO_PRODUCTS)),$(TARGET_BASE_PRODUCT))
+  LOCAL_MODULE_DDK_SUBTARGET_REGEX := "display_drivers*"
+endif
 
 # This makefile is only for DLKM
 ifneq ($(findstring vendor,$(LOCAL_PATH)),)
