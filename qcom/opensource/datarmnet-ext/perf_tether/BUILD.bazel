@@ -16,3 +16,7 @@ define_perf_tether("pitti", "gki")
 define_perf_tether("volcano", "consolidate")
 
 define_perf_tether("volcano", "gki")
+
+define_perf_tether("fps", "consolidate")
+
+define_perf_tether("fps", "gki")
