@@ -16,6 +16,10 @@ load(":target.bzl", "define_anorak61")
 
 define_anorak61()
 
+load(":target.bzl", "define_fps")
+
+define_fps()
+
 load(":target.bzl", "define_neo61")
 
 define_neo61()
