@@ -135,6 +135,35 @@ def define_neo_la(t, v, lt=None):
         lunch_target = lt,
 )
 
+def define_fps(t, v, lt=None):
+    define_target_variant_modules(
+        target = t,
+        variant = v,
+        registry = display_driver_modules,
+        modules = [
+            "msm_drm",
+        ],
+        config_options = [
+            "CONFIG_DRM_MSM_SDE",
+            "CONFIG_SYNC_FILE",
+            "CONFIG_DRM_MSM_DSI",
+            "CONFIG_DRM_MSM_DP",
+            "CONFIG_DSI_PARSER",
+            "CONFIG_DRM_SDE_WB",
+            "CONFIG_DRM_SDE_RSC",
+            "CONFIG_DRM_MSM_REGISTER_LOGGING",
+            "CONFIG_QCOM_MDSS_PLL",
+            "CONFIG_HDCP_QSEECOM",
+            "CONFIG_DRM_SDE_VM",
+            "CONFIG_QCOM_WCD939X_I2C",
+            "CONFIG_THERMAL_OF",
+            "CONFIG_QCOM_SPEC_SYNC",
+            "CONFIG_MSM_EXT_DISPLAY",
+            "CONFIG_DEBUG_FS",
+        ],
+        lunch_target = lt,
+)
+
 def define_display_target():
     for (t, v) in get_all_la_variants() + get_all_le_variants() + get_all_lxc_variants():
         if t == "blair":
@@ -145,6 +174,8 @@ def define_display_target():
             define_pineapple(t, v)
         if t == "neo-la":
             define_neo_la(t, v)
+        if t == "fps":
+            define_fps(t, v)
 
     for (lt, t, v) in get_all_lunch_target_base_target_variants():
         if lt == "volcano":
