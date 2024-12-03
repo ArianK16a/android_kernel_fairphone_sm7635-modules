@@ -12,7 +12,7 @@ LOCAL_MODULE_DDK_SUBTARGET_REGEX := "display_drivers*"
 ifeq ($(TARGET_BOARD_PLATFORM), volcano)
   LOCAL_MODULE_DDK_SUBTARGET_REGEX := "$(TARGET_BOARD_PLATFORM)_display_drivers.*"
 endif
-ifeq ($(filter $(TARGET_BASE_PRODUCT),$(T2M_CUSTO_PRODUCTS)),$(TARGET_BASE_PRODUCT))
+ifneq ($(filter $(TARGET_BASE_PRODUCT),$(T2M_CUSTO_PRODUCTS)),)
   LOCAL_MODULE_DDK_SUBTARGET_REGEX := "display_drivers*"
 endif
 
