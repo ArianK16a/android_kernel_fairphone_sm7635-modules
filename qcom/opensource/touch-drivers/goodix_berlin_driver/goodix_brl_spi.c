@@ -17,7 +17,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/spi/spi.h>
-#include <linux/version.h>
 
 #include "goodix_ts_core.h"
 #define TS_DRIVER_NAME		"gtx8_spi"
@@ -32,8 +31,6 @@
 #define SPI_WRITE_FLAG  0xF0
 #define SPI_READ_FLAG   0xF1
 
-static struct platform_device *goodix_pdev;
-struct goodix_bus_interface goodix_spi_bus[MAX_SUPPORTED_TOUCH_PANELS];
 
 /**
  * goodix_spi_read_bra- read device register through spi bus
@@ -184,21 +181,16 @@ static int goodix_spi_write(struct device *dev, unsigned int addr,
 	return ret;
 }
 
-static void goodix_pdev_release(struct device *dev)
-{
-	ts_info("goodix pdev released");
-	kfree(goodix_pdev);
-}
-
 static int goodix_spi_probe(struct spi_device *spi)
 {
-	int ret = 0, idx;
+	struct goodix_device_resource *dev_res;
+	int ret = 0;
 
 	ts_info("goodix spi probe in");
 
 	/* init spi_device */
-	spi->mode          = SPI_MODE_0;
-	spi->bits_per_word = 8;
+	spi->mode            = SPI_MODE_0;
+	spi->bits_per_word   = 8;
 
 	ret = spi_setup(spi);
 	if (ret) {
@@ -206,50 +198,33 @@ static int goodix_spi_probe(struct spi_device *spi)
 		return ret;
 	}
 
+	dev_res = kzalloc(sizeof(*dev_res), GFP_KERNEL);
+	if (!dev_res)
+		return -ENOMEM;
+	goodix_device_register(dev_res);
+
 	/* get ic type */
-	ret = goodix_get_ic_type(spi->dev.of_node);
+	ret = goodix_get_ic_type(spi->dev.of_node, &dev_res->bus);
 	if (ret < 0)
 		return ret;
 
-	idx = goodix_get_touch_type(spi->dev.of_node);
-	if (idx < 0 || idx >= MAX_SUPPORTED_TOUCH_PANELS) {
-		ts_err("unsupported touch type idx:%d", idx);
-		return -ENODEV;
-	}
-
-	goodix_spi_bus[idx].ic_type = ret;
-	goodix_spi_bus[idx].bus_type = GOODIX_BUS_TYPE_SPI;
-	goodix_spi_bus[idx].dev = &spi->dev;
-	if (goodix_spi_bus[idx].ic_type == IC_TYPE_BERLIN_A)
-		goodix_spi_bus[idx].read = goodix_spi_read_bra;
+	dev_res->bus.bus_type = GOODIX_BUS_TYPE_SPI;
+	dev_res->bus.dev = &spi->dev;
+	if (dev_res->bus.ic_type == IC_TYPE_BERLIN_A)
+		dev_res->bus.read = goodix_spi_read_bra;
 	else
-		goodix_spi_bus[idx].read = goodix_spi_read;
-	goodix_spi_bus[idx].write = goodix_spi_write;
-	/* ts core device */
-	goodix_pdev = kzalloc(sizeof(struct platform_device), GFP_KERNEL);
-	if (!goodix_pdev)
-		return -ENOMEM;
+		dev_res->bus.read = goodix_spi_read;
+	dev_res->bus.write = goodix_spi_write;
 
-	if (idx)
-		goodix_pdev->name = GOODIX_CORE_DEVICE_2_NAME;
-	else
-		goodix_pdev->name = GOODIX_CORE_DEVICE_NAME;
+	// platform device init
+	dev_res->pdev.name = GOODIX_CORE_DRIVER_NAME;
+	dev_res->pdev.id = dev_res->id;
+	dev_res->pdev.num_resources = 0;
 
-	goodix_pdev->id = 0;
-	goodix_pdev->num_resources = 0;
-	/*
-	 * you can find this platform dev in
-	 * /sys/devices/platfrom/goodix_ts.0
-	 * goodix_pdev->dev.parent = &client->dev;
-	 */
-	goodix_pdev->dev.platform_data = &goodix_spi_bus[idx];
-	goodix_pdev->dev.release = goodix_pdev_release;
-
-	/*
-	 * register platform device, then the goodix_ts_core
+	/* register platform device, then the goodix_ts_core
 	 * module will probe the touch deivce.
 	 */
-	ret = platform_device_register(goodix_pdev);
+	ret = platform_device_register(&dev_res->pdev);
 	if (ret) {
 		ts_err("failed register goodix platform device, %d", ret);
 		goto err_pdev;
@@ -258,32 +233,31 @@ static int goodix_spi_probe(struct spi_device *spi)
 	return 0;
 
 err_pdev:
-	kfree(goodix_pdev);
-	goodix_pdev = NULL;
+	kfree(dev_res);
 	ts_info("spi probe out, %d", ret);
 	return ret;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 19, 0))
-	static void goodix_spi_remove(struct spi_device *spi)
-	{
-	platform_device_unregister(goodix_pdev);
-	}
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
+static void goodix_spi_remove(struct spi_device *spi)
+{
+	// platform_device_unregister(dev_res->pdev);
+}
 #else
-	static int goodix_spi_remove(struct spi_device *spi)
-	{
-	platform_device_unregister(goodix_pdev);
+static int goodix_spi_remove(struct spi_device *spi)
+{
+	// platform_device_unregister(dev_res->pdev);
 	return 0;
-	}
+}
 #endif
 
 #ifdef CONFIG_OF
 static const struct of_device_id spi_matchs[] = {
-	{.compatible = "goodix,gt9897S",},
-	{.compatible = "goodix,gt9897T",},
-	{.compatible = "goodix,gt9966S",},
-	{.compatible = "goodix,gt9916S",},
-	{.compatible = "goodix,gt9916S2",},
+	{.compatible = "goodix,brl-a",},
+	{.compatible = "goodix,brl-b",},
+	{.compatible = "goodix,brl-b,gt7986",},
+	{.compatible = "goodix,brl-d",},
+	{.compatible = "goodix,nottingham",},
 	{},
 };
 #endif
