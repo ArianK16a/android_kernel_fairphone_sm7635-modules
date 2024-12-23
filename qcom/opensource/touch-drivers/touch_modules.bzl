@@ -31,6 +31,7 @@ module_entry(
             "goodix_berlin_driver/goodix_ts_core.c",
             "goodix_berlin_driver/goodix_ts_gesture.c",
             "goodix_berlin_driver/goodix_ts_inspect.c",
+            "goodix_berlin_driver/goodix_ts_proc.c",
             "goodix_berlin_driver/goodix_ts_tools.c",
             "goodix_berlin_driver/goodix_ts_utils.c"
     ]
