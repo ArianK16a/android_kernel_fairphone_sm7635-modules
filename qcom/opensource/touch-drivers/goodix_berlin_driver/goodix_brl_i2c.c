@@ -17,7 +17,6 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
-#include <linux/version.h>
 
 #include "goodix_ts_core.h"
 
@@ -26,8 +25,6 @@
 #define GOODIX_BUS_RETRY_TIMES		2
 #define GOODIX_REG_ADDR_SIZE		4
 
-static struct platform_device *goodix_pdev;
-struct goodix_bus_interface goodix_i2c_bus;
 
 static int goodix_i2c_read(struct device *dev, unsigned int reg,
 			 unsigned char *data, unsigned int len)
@@ -71,8 +68,10 @@ static int goodix_i2c_read(struct device *dev, unsigned int reg,
 		msgs[1].len = transfer_length;
 
 		for (retry = 0; retry < GOODIX_BUS_RETRY_TIMES; retry++) {
-			if (likely(i2c_transfer(client->adapter, msgs, 2) == 2)) {
-				memcpy(&data[pos], msgs[1].buf, transfer_length);
+			if (likely(i2c_transfer(client->adapter,
+						msgs, 2) == 2)) {
+				memcpy(&data[pos], msgs[1].buf,
+				       transfer_length);
 				pos += transfer_length;
 				address += transfer_length;
 				break;
@@ -82,7 +81,7 @@ static int goodix_i2c_read(struct device *dev, unsigned int reg,
 		}
 		if (unlikely(retry == GOODIX_BUS_RETRY_TIMES)) {
 			ts_err("I2c read failed,dev:%02x,reg:%04x,size:%u",
-				client->addr, reg, len);
+			       client->addr, reg, len);
 			r = -EAGAIN;
 			goto read_exit;
 		}
@@ -103,8 +102,8 @@ static int goodix_i2c_write(struct device *dev, unsigned int reg,
 	unsigned char put_buf[128];
 	int retry, r = 0;
 	struct i2c_msg msg = {
-		.addr = client->addr,
-		.flags = !I2C_M_RD,
+			.addr = client->addr,
+			.flags = !I2C_M_RD,
 	};
 
 	if (likely(len + GOODIX_REG_ADDR_SIZE < sizeof(put_buf))) {
@@ -118,9 +117,9 @@ static int goodix_i2c_write(struct device *dev, unsigned int reg,
 
 	while (pos != len) {
 		if (unlikely(len - pos > I2C_MAX_TRANSFER_SIZE -
-				GOODIX_REG_ADDR_SIZE))
+			     GOODIX_REG_ADDR_SIZE))
 			transfer_length = I2C_MAX_TRANSFER_SIZE -
-				GOODIX_REG_ADDR_SIZE;
+			     GOODIX_REG_ADDR_SIZE;
 		else
 			transfer_length = len - pos;
 		msg.buf[0] = (address >> 24) & 0xFF;
@@ -156,65 +155,50 @@ write_exit:
 	return r;
 }
 
-static void goodix_pdev_release(struct device *dev)
-{
-	ts_info("goodix pdev released");
-	kfree(goodix_pdev);
-}
-
 static int goodix_i2c_probe(struct i2c_client *client,
 	const struct i2c_device_id *dev_id)
 {
+	struct goodix_device_resource *dev_res;
 	int ret = 0;
 
 	ts_info("goodix i2c probe in");
-
-#ifndef CONFIG_ARCH_QTI_VM
-	ret = i2c_check_functionality(client->adapter, I2C_FUNC_I2C);
+	ret = i2c_check_functionality(client->adapter,
+		I2C_FUNC_I2C);
 	if (!ret)
 		return -EIO;
-#endif
+
+	dev_res = kzalloc(sizeof(*dev_res), GFP_KERNEL);
+	if (!dev_res)
+		return -ENOMEM;
+	goodix_device_register(dev_res);
 
 	/* get ic type */
-	ret = goodix_get_ic_type(client->dev.of_node);
+	ret = goodix_get_ic_type(client->dev.of_node, &dev_res->bus);
 	if (ret < 0)
 		return ret;
 
-	goodix_i2c_bus.ic_type = ret;
-	goodix_i2c_bus.bus_type = GOODIX_BUS_TYPE_I2C;
-	goodix_i2c_bus.dev = &client->dev;
-	goodix_i2c_bus.read = goodix_i2c_read;
-	goodix_i2c_bus.write = goodix_i2c_write;
-	/* ts core device */
-	goodix_pdev = kzalloc(sizeof(struct platform_device), GFP_KERNEL);
-	if (!goodix_pdev)
-		return -ENOMEM;
+	dev_res->bus.bus_type = GOODIX_BUS_TYPE_I2C;
+	dev_res->bus.dev = &client->dev;
+	dev_res->bus.read = goodix_i2c_read;
+	dev_res->bus.write = goodix_i2c_write;
 
-	goodix_pdev->name = GOODIX_CORE_DRIVER_NAME;
-	goodix_pdev->id = 0;
-	goodix_pdev->num_resources = 0;
-	/*
-	 * you can find this platform dev in
-	 * /sys/devices/platform/goodix_ts.0
-	 * goodix_pdev->dev.parent = &client->dev;
-	 */
-	goodix_pdev->dev.platform_data = &goodix_i2c_bus;
-	goodix_pdev->dev.release = goodix_pdev_release;
+	dev_res->pdev.name = GOODIX_CORE_DRIVER_NAME;
+	dev_res->pdev.id = dev_res->id;
+	dev_res->pdev.num_resources = 0;
 
 	/* register platform device, then the goodix_ts_core
 	 * module will probe the touch device.
 	 */
-	ret = platform_device_register(goodix_pdev);
+	ret = platform_device_register(&dev_res->pdev);
 	if (ret) {
 		ts_err("failed register goodix platform device, %d", ret);
 		goto err_pdev;
 	}
 	ts_info("i2c probe out");
-	return ret;
+	return 0;
 
 err_pdev:
-	kfree(goodix_pdev);
-	goodix_pdev = NULL;
+	kfree(dev_res);
 	ts_info("i2c probe out, %d", ret);
 	return ret;
 }
@@ -222,21 +206,22 @@ err_pdev:
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
 static void goodix_i2c_remove(struct i2c_client *client)
 {
-	platform_device_unregister(goodix_pdev);
+	// platform_device_unregister(goodix_pdev);
 }
 #else
 static int goodix_i2c_remove(struct i2c_client *client)
 {
-	platform_device_unregister(goodix_pdev);
+	// platform_device_unregister(goodix_pdev);
 	return 0;
 }
 #endif
 
 #ifdef CONFIG_OF
 static const struct of_device_id i2c_matchs[] = {
-	{.compatible = "goodix,gt9897",},
-	{.compatible = "goodix,gt9966",},
-	{.compatible = "goodix,gt9916",},
+	{.compatible = "goodix,brl-a",},
+	{.compatible = "goodix,brl-b",},
+	{.compatible = "goodix,brl-d",},
+	{.compatible = "goodix,nottingham",},
 	{},
 };
 MODULE_DEVICE_TABLE(of, i2c_matchs);
