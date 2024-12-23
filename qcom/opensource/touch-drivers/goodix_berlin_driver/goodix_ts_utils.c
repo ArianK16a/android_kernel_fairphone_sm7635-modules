@@ -70,30 +70,22 @@ int checksum_cmp(const u8 *data, int size, int mode)
 	u32 r_checksum = 0;
 	u32 i;
 
-	if (((mode == CHECKSUM_MODE_U8_LE) && (size < 2)) ||
-	    ((mode == CHECKSUM_MODE_U16_LE) && (size < 4)) ||
-	    ((mode == CHECKSUM_MODE_U16_LE) && (size % 2 != 0)))
-		return 1;
-
 	if (mode == CHECKSUM_MODE_U8_LE) {
+		if (size < 2)
+			return 1;
 		for (i = 0; i < size - 2; i++)
 			cal_checksum += data[i];
-		r_checksum += data[i++];
-		r_checksum += (data[i] << 8);
+		r_checksum = data[size - 2] + (data[size - 1] << 8);
 		return (cal_checksum & 0xFFFF) == r_checksum ? 0 : 1;
 	}
 
-	if (mode == CHECKSUM_MODE_U16_LE) {
-		for (i = 0; i < size - 4; i += 2)
-			cal_checksum += data[i] + (data[i + 1] << 8);
-		r_checksum += data[i++];
-		r_checksum += (data[i++] << 8);
-		r_checksum += (data[i++] << 16);
-		r_checksum += (data[i] << 24);
-		return cal_checksum == r_checksum ? 0 : 1;
-	}
-
-	return 1;
+	if (size < 4)
+		return 1;
+	for (i = 0; i < size - 4; i += 2)
+		cal_checksum += data[i] + (data[i + 1] << 8);
+	r_checksum = data[size - 4] + (data[size - 3] << 8) +
+		(data[size - 2] << 16) + (data[size - 1] << 24);
+	return cal_checksum == r_checksum ? 0 : 1;
 }
 
 /* return 1 if all data is zero or ff
@@ -108,12 +100,12 @@ int is_risk_data(const u8 *data, int size)
 	for (i = 0; i < size; i++) {
 		if (data[i] == 0)
 			zero_count++;
-		else if (data[i] == 0xff)
+		else if (data[i] == 0xFF)
 			ff_count++;
 	}
 	if (zero_count == size || ff_count == size) {
 		ts_info("warning data is all %s\n",
-			zero_count == size ? "zero" : "0xff");
+			zero_count == size ? "0x00" : "0xFF");
 		return 1;
 	}
 
@@ -157,52 +149,58 @@ void goodix_rotate_abcd2cbad(int tx, int rx, s16 *data)
 }
 
 /* get ic type */
-int goodix_get_ic_type(struct device_node *node)
+int goodix_get_ic_type(struct device_node *node,
+		struct goodix_bus_interface *bus_inf)
 {
-	const char *name_tmp;
-	int ret;
+	const struct property *prop;
+	char ic_name[128] = {0};
+	int i;
 
-	ret = of_property_read_string(node, "compatible", &name_tmp);
-	if (ret < 0) {
-		ts_err("get compatible failed");
-		return ret;
-	}
-
-	if (strstr(name_tmp, "9897")) {
-		ts_info("ic type is BerlinA");
-		ret = IC_TYPE_BERLIN_A;
-	} else if (strstr(name_tmp, "9966") || strstr(name_tmp, "7986")) {
-		ts_info("ic type is BerlinB");
-		ret = IC_TYPE_BERLIN_B;
-	} else if (strstr(name_tmp, "9916")) {
-		ts_info("ic type is BerlinD");
-		ret = IC_TYPE_BERLIN_D;
-	} else {
-		ts_info("can't find valid ic_type");
-		ret = -EINVAL;
-	}
-
-	return ret;
-}
-
-/* get touch type */
-int goodix_get_touch_type(struct device_node *node)
-{
-	const char *touch_type;
-	int ret;
-
-	ret = of_property_read_string(node, "goodix,touch-type", &touch_type);
-	if (ret) {
-		ts_err("No touch type found\n");
+	prop = of_find_property(node, "compatible", NULL);
+	if (!prop || !prop->value || prop->length > sizeof(ic_name)) {
+		ts_err("invalid compatible property");
 		return -EINVAL;
 	}
 
-	if (!strcmp(touch_type, "primary"))
-		ret = PRIMARY_TOUCH_IDX;
-	else if (!strcmp(touch_type, "secondary"))
-		ret = SECONDARY_TOUCH_IDX;
-	else
-		ret = -EINVAL;
+	memcpy(ic_name, prop->value, prop->length);
 
-	return ret;
+	/* replace string end flag with ';' */
+	for (i = 0; i < prop->length - 1; i++)
+		if (ic_name[i] == 0)
+			ic_name[i] = ';';
+
+	ts_info("ic_name %s", ic_name);
+
+	if (strstr(ic_name, "brl-a")) {
+		ts_info("ic type is brl-a");
+		bus_inf->ic_type = IC_TYPE_BERLIN_A;
+		return 0;
+	}
+
+	if (strstr(ic_name, "brl-b")) {
+		ts_info("ic type is brl-b");
+		bus_inf->ic_type = IC_TYPE_BERLIN_B;
+		if (strstr(ic_name, "ga687x")) {
+			bus_inf->sub_ic_type = IC_TYPE_SUB_B2;
+			ts_info("sub ic type is brl-b2");
+		} else if (strstr(ic_name, "gt7986")) {
+			bus_inf->sub_ic_type = IC_TYPE_SUB_GT7986;
+			ts_info("sub ic type is GT7986");			
+		}
+		return 0;
+	}
+	if (strstr(ic_name, "brl-d")) {
+		ts_info("ic type is brl-d");
+		bus_inf->ic_type = IC_TYPE_BERLIN_D;
+		return 0;
+	}
+	if (strstr(ic_name, "nottingham")) {
+		ts_info("ic type is nottingham");
+		bus_inf->ic_type = IC_TYPE_NOTTINGHAM;
+		return 0;
+	}
+	
+	ts_err("unsupported ic type %s", ic_name);
+	return -EINVAL;
 }
+
