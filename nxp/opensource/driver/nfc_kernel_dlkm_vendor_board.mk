@@ -10,6 +10,10 @@ else
   NFC_DLKM_ENABLED := true
 endif
 
+ifeq ($(strip $(BOARD_USES_SAMSUNG_NFC)),true)
+    NFC_DLKM_ENABLED := false
+endif
+
 ########## Build kernel module based on local DLKM flag status ##########
 ifeq ($(NFC_DLKM_ENABLED), true)
 ifeq ($(call is-board-platform-in-list, pineapple blair pitti volcano),true)
