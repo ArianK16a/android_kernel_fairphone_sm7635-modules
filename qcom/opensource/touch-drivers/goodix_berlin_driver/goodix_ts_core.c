@@ -19,6 +19,7 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
+#include <linux/soc/qcom/panel_event_notifier.h>
 
 #if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 38)
 #include <linux/input/mt.h>
@@ -30,6 +31,32 @@
 // #include "../../../video/fbdev/core/fb_firefly.h"
 
 #define GOODIX_DEFAULT_CFG_NAME		"goodix_cfg_group.cfg"
+
+#if defined(CONFIG_DRM)
+static struct drm_panel *active_panel;
+static void goodix_panel_notifier_callback(enum panel_event_notifier_tag tag,
+		 struct panel_event_notification *event, void *client_data);
+
+
+static void goodix_register_for_panel_events(struct device_node *dp,
+					struct goodix_ts_core *cd)
+{
+	void *cookie;
+
+	cookie = panel_event_notifier_register(PANEL_EVENT_NOTIFICATION_PRIMARY,
+			PANEL_EVENT_NOTIFIER_CLIENT_PRIMARY_TOUCH, active_panel,
+			&goodix_panel_notifier_callback, cd);
+	if (!cookie) {
+		pr_err("Failed to register for panel events\n");
+		return;
+	}
+
+	ts_debug("registered for panel notifications panel: 0x%x\n",
+			active_panel);
+
+	cd->notifier_cookie = cookie;
+}
+#endif
 
 struct goodix_device_manager goodix_devices;
 
@@ -792,7 +819,7 @@ static void goodix_ts_procfs_exit(struct goodix_ts_core *core_data)
 	remove_proc_entry(proc_node, NULL);
 }
 
-#if IS_ENABLED(CONFIG_OF)
+#if defined(CONFIG_OF)
 /**
  * goodix_parse_dt_resolution - parse resolution from dt
  * @node: devicetree node
@@ -1719,7 +1746,51 @@ static int goodix_ts_resume(struct goodix_ts_core *core_data)
 	return 0;
 }
 
-#if IS_ENABLED(CONFIG_FB)
+#if defined(CONFIG_DRM)
+
+static void goodix_panel_notifier_callback(enum panel_event_notifier_tag tag,
+		 struct panel_event_notification *notification, void *client_data)
+{
+	struct goodix_ts_core *core_data = client_data;
+
+	if (!notification) {
+		pr_err("Invalid notification\n");
+		return;
+	}
+
+	ts_debug("Notification type:%d, early_trigger:%d",
+			notification->notif_type,
+			notification->notif_data.early_trigger);
+	switch (notification->notif_type) {
+	case DRM_PANEL_EVENT_UNBLANK:
+		if (!notification->notif_data.early_trigger)
+			goodix_ts_resume(core_data);
+		break;
+
+	case DRM_PANEL_EVENT_BLANK:
+		if (notification->notif_data.early_trigger)
+			goodix_ts_suspend(core_data);
+		break;
+
+	case DRM_PANEL_EVENT_BLANK_LP:
+		ts_debug("received lp event\n");
+		break;
+
+	case DRM_PANEL_EVENT_FPS_CHANGE:
+		ts_debug("Received fps change old fps:%d new fps:%d\n",
+				notification->notif_data.old_fps,
+				notification->notif_data.new_fps);
+		break;
+
+	default:
+		ts_debug("notification serviced :%d\n",
+				notification->notif_type);
+		break;
+	}
+}
+
+#elif IS_ENABLED(CONFIG_FB)
+
 /**
  * goodix_ts_fb_notifier_callback - Framebuffer notifier callback
  * Called by kernel during framebuffer blanck/unblank phrase
@@ -1732,7 +1803,9 @@ int goodix_ts_fb_notifier_callback(struct notifier_block *self,
 	struct fb_event *fb_event = data;
 
 	if (fb_event && fb_event->data && core_data) {
-		if (event == FB_EVENT_BLANK) {
+		if (event == FB_EARLY_EVENT_BLANK) {
+			/* before fb blank */
+		} else if (event == FB_EVENT_BLANK) {
 			int *blank = fb_event->data;
 
 			if (*blank == FB_BLANK_UNBLANK)
@@ -1746,8 +1819,9 @@ int goodix_ts_fb_notifier_callback(struct notifier_block *self,
 }
 #endif
 
-#if IS_ENABLED(CONFIG_PM)
-#if !IS_ENABLED(CONFIG_FB) && !IS_ENABLED(CONFIG_HAS_EARLYSUSPEND)
+
+#if defined(CONFIG_PM) && !defined(CONFIG_DRM)
+#if !defined(CONFIG_FB) && !defined(CONFIG_HAS_EARLYSUSPEND)
 /**
  * goodix_ts_pm_suspend - PM suspend function
  * Called by kernel during system suspend phrase
@@ -1800,10 +1874,12 @@ int goodix_ts_stage2_init(struct goodix_ts_core *cd)
 	}
 	ts_info("success register irq");
 
-#if IS_ENABLED(CONFIG_FB)
+#if defined(CONFIG_FB)
 	cd->fb_notifier.notifier_call = goodix_ts_fb_notifier_callback;
 	if (fb_register_client(&cd->fb_notifier))
 		ts_err("Failed to register fb notifier client:%d", ret);
+#elif defined(CONFIG_DRM)
+	goodix_register_for_panel_events(cd->bus->dev->of_node, cd);
 #endif
 	/* create sysfs files */
 	goodix_ts_sysfs_init(cd);
@@ -1951,6 +2027,78 @@ static int goodix_start_later_init(struct goodix_ts_core *ts_core)
 	return 0;
 }
 
+#if defined(CONFIG_DRM)
+static int goodix_check_dt(struct device_node *np)
+{
+	int i;
+	int count;
+	struct device_node *node;
+	struct drm_panel *panel;
+
+	count = of_count_phandle_with_args(np, "panel", NULL);
+	if (count <= 0)
+		return 0;
+
+	for (i = 0; i < count; i++) {
+		node = of_parse_phandle(np, "panel", i);
+		panel = of_drm_find_panel(node);
+		of_node_put(node);
+		if (!IS_ERR(panel)) {
+			active_panel = panel;
+			return 0;
+		}
+	}
+
+	return PTR_ERR(panel);
+}
+
+static int goodix_check_default_tp(struct device_node *dt, const char *prop)
+{
+	const char **active_tp = NULL;
+	int count, tmp, score = 0;
+	const char *active;
+	int ret, i;
+
+	count = of_property_count_strings(dt->parent, prop);
+	if (count <= 0 || count > 3)
+		return -ENODEV;
+
+	active_tp = kcalloc(count, sizeof(char *),  GFP_KERNEL);
+	if (!active_tp) {
+		ts_err("FTS alloc failed\n");
+		return -ENOMEM;
+	}
+
+	ret = of_property_read_string_array(dt->parent, prop,
+			active_tp, count);
+	if (ret < 0) {
+		ts_err("fail to read %s %d\n", prop, ret);
+		ret = -ENODEV;
+		goto out;
+	}
+
+	for (i = 0; i < count; i++) {
+		active = active_tp[i];
+		if (active != NULL) {
+			tmp = of_device_is_compatible(dt, active);
+			if (tmp > 0)
+				score++;
+		}
+	}
+
+	if (score <= 0) {
+		ts_err("not match this driver\n");
+		ret = -ENODEV;
+		goto out;
+	}
+	ret = 0;
+out:
+	kfree(active_tp);
+	return ret;
+}
+
+#endif
+
 /* goodix fb test */
 // static void test_suspend(void)
 // {
@@ -1978,6 +2126,20 @@ static int goodix_ts_probe(struct platform_device *pdev)
 
 	core_data = &dev_res->core_data;
 	bus_interface = &dev_res->bus;
+#if defined(CONFIG_DRM)
+	ret = goodix_check_dt(bus_interface->dev->of_node);
+	if (ret == -EPROBE_DEFER)
+		return ret;
+
+	if (ret) {
+		if (!goodix_check_default_tp(bus_interface->dev->of_node, "qcom,touch-active"))
+			ret = -EPROBE_DEFER;
+		else
+			ret = -ENODEV;
+
+		return ret;
+	}
+#endif
 
 	if (IS_ENABLED(CONFIG_OF) && bus_interface->dev->of_node) {
 		/* parse devicetree property */
@@ -2056,9 +2218,14 @@ static int goodix_ts_remove(struct platform_device *pdev)
 		gesture_module_exit(core_data);
 		inspect_module_exit(core_data);
 		hw_ops->irq_enable(core_data, false);
-	#if IS_ENABLED(CONFIG_FB)
+
+	#if defined(CONFIG_DRM)
+		if (core_data->notifier_cookie)
+			panel_event_notifier_unregister(core_data->notifier_cookie);
+	#elif IS_ENABLED(CONFIG_FB)
 		fb_unregister_client(&core_data->fb_notifier);
 	#endif
+
 		if (atomic_read(&ts_esd->esd_on))
 			goodix_ts_esd_off(core_data);
 
@@ -2073,9 +2240,9 @@ static int goodix_ts_remove(struct platform_device *pdev)
 	return 0;
 }
 
-#if IS_ENABLED(CONFIG_PM)
+#if defined(CONFIG_PM) && !defined(CONFIG_DRM)
 static const struct dev_pm_ops dev_pm_ops = {
-#if !IS_ENABLED(CONFIG_FB) && !IS_ENABLED(CONFIG_HAS_EARLYSUSPEND)
+#if !defined(CONFIG_FB) && !defined(CONFIG_HAS_EARLYSUSPEND)
 	.suspend = goodix_ts_pm_suspend,
 	.resume = goodix_ts_pm_resume,
 #endif
@@ -2092,7 +2259,7 @@ static struct platform_driver goodix_ts_driver = {
 	.driver = {
 		.name = GOODIX_CORE_DRIVER_NAME,
 		.owner = THIS_MODULE,
-#if IS_ENABLED(CONFIG_PM)
+#if defined(CONFIG_PM) && !defined(CONFIG_DRM)
 		.pm = &dev_pm_ops,
 #endif
 	},
