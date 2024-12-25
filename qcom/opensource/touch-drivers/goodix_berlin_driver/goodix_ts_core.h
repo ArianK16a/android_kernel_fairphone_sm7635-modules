@@ -711,7 +711,10 @@ struct goodix_ts_core {
 
 	struct goodix_ts_esd ts_esd;
 
-#if IS_ENABLED(CONFIG_FB)
+#if defined(CONFIG_DRM)
+	struct notifier_block fb_notifier;
+	void *notifier_cookie;
+#elif defined(CONFIG_FB)
 	struct notifier_block fb_notifier;
 #endif
 };
