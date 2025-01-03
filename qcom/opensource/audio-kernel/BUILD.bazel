@@ -34,6 +34,12 @@ ddk_headers(
     ])
 )
 ddk_headers(
+    name = "aw882xx_headers",
+    hdrs = glob([
+        "asoc/codecs/aw882xx/*.h"
+    ])
+)
+ddk_headers(
     name = "audio_configs",
     hdrs = glob([
         "config/*.h"
@@ -42,7 +48,7 @@ ddk_headers(
 )
 ddk_headers(
     name = "audio_headers",
-    hdrs = [":audio_common_headers",  ":audio_uapi_headers", ":audio_src_headers", ":audio_configs"]
+    hdrs = [":audio_common_headers", ":aw882xx_headers", ":audio_uapi_headers", ":audio_src_headers", ":audio_configs"]
 )
 
 load(":build/audio_target.bzl", "define_audio_target")
