@@ -29,7 +29,8 @@ AUDIO_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/q6_notifier_dlkm.ko\
 	$(KERNEL_MODULES_OUT)/mbhc_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/wcd9xxx_dlkm.ko \
 	$(KERNEL_MODULES_OUT)/stub_dlkm.ko \
-	$(KERNEL_MODULES_OUT)/machine_dlkm.ko
+	$(KERNEL_MODULES_OUT)/machine_dlkm.ko \
+	$(KERNEL_MODULES_OUT)/aw882xx_dlkm.ko
 ifneq (,$(call is-board-platform-in-list2, volcano))
 AUDIO_KERNEL_MODULES += $(KERNEL_MODULES_OUT)/lpass_bt_swr_dlkm.ko
 endif
