@@ -2596,6 +2596,7 @@ static int lpass_cdc_va_macro_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: register macro failed\n", __func__);
 		goto reg_macro_fail;
 	}
+
 	pm_runtime_set_autosuspend_delay(&pdev->dev, VA_AUTO_SUSPEND_DELAY);
 	pm_runtime_use_autosuspend(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
