@@ -4432,7 +4432,6 @@ static int wcd9378_bind(struct device *dev)
 				__func__);
 		goto err_irq;
 	}
-
 	return ret;
 err_irq:
 	wcd_irq_exit(&wcd9378->irq_info, wcd9378->virq);

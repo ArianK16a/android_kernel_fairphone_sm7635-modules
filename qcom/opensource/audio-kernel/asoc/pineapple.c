@@ -106,6 +106,9 @@ struct msm_asoc_mach_data {
 	bool dedicated_wsa2; /* used to define how wsa2 slave devices are used */
 	int wcd_used;
 	int wsa_hac_enabled;
+	#ifdef CONFIG_T2M_SND_HAC
+	struct device_node *hac_pa_gpio_p;
+	#endif
 };
 
 static bool is_initial_boot;
@@ -121,12 +124,43 @@ static void *def_wcd_mbhc_cal(void);
 static int msm_tx_codec_init(struct snd_soc_pcm_runtime *);
 static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime*);
 static int msm_int_wsa_init(struct snd_soc_pcm_runtime*);
+#ifdef CONFIG_SND_SOC_AW882XX
+#else
 static int msm_int_wsa881x_init(struct snd_soc_pcm_runtime *);
+#endif
 static int msm_int_wsa884x_init(struct snd_soc_pcm_runtime*);
 static int msm_int_wsa883x_init(struct snd_soc_pcm_runtime*);
 static int msm_int_wsa2_init(struct snd_soc_pcm_runtime *);
 static int msm_int_wsa884x_2_init(struct snd_soc_pcm_runtime *);
 static int msm_int_wsa883x_2_init(struct snd_soc_pcm_runtime *);
+
+#ifdef CONFIG_T2M_SND_HAC
+static int msm_enable_hac_pa(struct snd_soc_dapm_widget *w,
+                       struct snd_kcontrol *kcontrol,
+                       int event);
+
+static const struct snd_kcontrol_new hac_pa_switch[] = {
+    SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_soc_dapm_widget msm_hac_dapm_widgets[] = {
+    SND_SOC_DAPM_MIXER("HAC_PA", SND_SOC_NOPM, 0, 0,
+               hac_pa_switch, ARRAY_SIZE(hac_pa_switch)),
+    SND_SOC_DAPM_PGA_E("HAC PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
+                msm_enable_hac_pa,
+                SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+                SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+    SND_SOC_DAPM_INPUT("HAC_RX"),
+    SND_SOC_DAPM_OUTPUT("HAC"),
+};
+
+static const struct snd_soc_dapm_route msm_hac_audio_map[] = {
+    {"HAC_PA", "Switch", "HAC_RX"},
+    {"HAC PGA", NULL, "HAC_PA"},
+    {"HAC", NULL, "HAC PGA"},
+};
+#endif
 
 /*
  * Need to report LINEIN
@@ -448,6 +482,43 @@ static const struct snd_soc_dapm_widget msm_int_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("Digital Mic6", NULL),
 	SND_SOC_DAPM_MIC("Digital Mic7", NULL),
 };
+
+#ifdef CONFIG_T2M_SND_HAC
+static int msm_enable_hac_pa(struct snd_soc_dapm_widget *w,
+                       struct snd_kcontrol *kcontrol,
+                       int event)
+{
+    struct snd_soc_component *component =
+                    snd_soc_dapm_to_component(w->dapm);
+    struct msm_asoc_mach_data *pdata = NULL;
+    int ret = 0;
+
+    dev_dbg(component->dev, "HAC %s wname: %s event: %d\n", __func__,
+        w->name, event);
+
+    pdata = snd_soc_card_get_drvdata(component->card);
+
+    switch (event) {
+    case SND_SOC_DAPM_POST_PMU:
+        ret = msm_cdc_pinctrl_select_active_state(
+                    pdata->hac_pa_gpio_p);
+        if (ret) {
+            pr_err("%s:HAC gpio set cannot be de-activated %s\n",
+                    __func__, "hac_pa");
+        }
+        break;
+    case SND_SOC_DAPM_PRE_PMD:
+        ret = msm_cdc_pinctrl_select_sleep_state(
+                    pdata->hac_pa_gpio_p);
+        if (ret) {
+            pr_err("%s:HAC gpio set cannot be de-activated %s\n",
+                    __func__, "hac_pa");
+        }
+        break;
+    };
+    return ret;
+}
+#endif
 
 static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 {
@@ -988,7 +1059,11 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
+#ifdef CONFIG_SND_SOC_AW882XX
+		.init = &msm_rx_tx_codec_init,
+#else
 		.init = &msm_int_wsa881x_init,
+#endif
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -1065,7 +1140,11 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
+#ifdef CONFIG_SND_SOC_AW882XX
+		.init = &msm_rx_tx_codec_init,
+#else
 		.init = &msm_int_wsa881x_init,
+#endif
 	},
 };
 
@@ -2087,7 +2166,8 @@ static int msm_int_wsa884x_init(struct snd_soc_pcm_runtime *rtd)
 
 	return 0;
 }
-
+#ifdef CONFIG_SND_SOC_AW882XX
+#else
 static int msm_int_wsa881x_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct msm_asoc_mach_data *pdata =
@@ -2101,6 +2181,7 @@ static int msm_int_wsa881x_init(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 
 }
+#endif
 static int msm_int_wsa_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct msm_asoc_mach_data *pdata =
@@ -2304,6 +2385,18 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_new_controls(dapm, msm_int_dapm_widgets,
 				ARRAY_SIZE(msm_int_dapm_widgets));
+
+#ifdef CONFIG_T2M_SND_HAC
+    snd_soc_dapm_new_controls(dapm, msm_hac_dapm_widgets,
+                ARRAY_SIZE(msm_hac_dapm_widgets));
+
+    snd_soc_dapm_add_routes(dapm, msm_hac_audio_map,
+                    ARRAY_SIZE(msm_hac_audio_map));
+
+    snd_soc_dapm_ignore_suspend(dapm, "HAC");
+    snd_soc_dapm_ignore_suspend(dapm, "HAC_RX");
+    snd_soc_dapm_sync(dapm);
+#endif
 
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic0");
 	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic1");
@@ -2545,6 +2638,35 @@ static int msm_audio_ssr_register(struct device *dev)
 	return ret;
 }
 
+#ifdef CONFIG_T2M_SND_HAC
+int is_hac_pa_gpio_support(struct platform_device *pdev,
+            struct msm_asoc_mach_data *pdata)
+{
+    const char *hac_pa_gpio = "qcom,msm-hac-pa-gpios";//plt defined in dtsi
+    int ret = 0;
+
+    pr_debug("%s:HAC Enter\n", __func__);
+
+    pdata->hac_pa_gpio_p= of_parse_phandle(pdev->dev.of_node, hac_pa_gpio, 0);
+    if (!pdata->hac_pa_gpio_p) {
+        dev_dbg(&pdev->dev, "HAC property %s not detected in node %s",
+            hac_pa_gpio, pdev->dev.of_node->full_name);
+    } else {
+        dev_dbg(&pdev->dev, "%s detected", hac_pa_gpio);
+        if (pdata->hac_pa_gpio_p) {
+            ret = msm_cdc_pinctrl_select_sleep_state(
+                        pdata->hac_pa_gpio_p);
+            if (ret) {
+                pr_err("%s:HAC gpio set cannot be de-activated %s\n",
+                        __func__, "hac_pa");
+            }
+        }
+    }
+
+    return 0;
+}
+#endif
+
 struct msm_common_pdata *msm_common_get_pdata(struct snd_soc_card *card)
 {
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
@@ -2687,8 +2809,8 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			goto err;
 		}
 	}
-
 	ret = msm_populate_dai_link_component_of_node(card);
+
 	if (ret) {
 		ret = -EPROBE_DEFER;
 		goto err;
@@ -2707,8 +2829,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			__func__, ret);
 		goto err;
 	}
-	dev_info(&pdev->dev, "%s: Sound card %s registered\n",
-		 __func__, card->name);
+	dev_info(&pdev->dev, "%s: Sound card %s registered\n", __func__, card->name);
 
 	if (wcd_mbhc_cfg.enable_usbc_analog ||
 		wcd_mbhc_cfg.usbss_hsj_connect_enable)
@@ -2725,6 +2846,13 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	if (!pdata->wcd_usbss_handle)
 		dev_dbg(&pdev->dev, "property %s not detected in node %s\n",
 			"wcd939x-i2c-handle", pdev->dev.of_node->full_name);
+
+#ifdef CONFIG_T2M_SND_HAC
+	/* parse hac configuration */
+	ret = is_hac_pa_gpio_support(pdev, pdata);
+	if (ret < 0)
+		pr_err("%s:HAC doesn't support hac pa gpio\n", __func__);
+#endif
 
 	pdata->dmic01_gpio_p = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,cdc-dmic01-gpios",
