@@ -152,6 +152,7 @@ def define_pineapple(t, v, lt=None):
             "wcd938x_slave_dlkm",
             "wcd939x_dlkm",
             "wcd939x_slave_dlkm",
+            "aw882xx_dlkm",
             "wcd9378_dlkm",
             "wcd9378_slave_dlkm"
         ],
@@ -325,6 +326,7 @@ def define_volcano(t, v, lt=None):
             "wcd938x_slave_dlkm",
             "wcd939x_dlkm",
             "wcd939x_slave_dlkm",
+            "aw882xx_dlkm",
             "wcd9378_dlkm",
             "wcd9378_slave_dlkm"
         ],
@@ -388,6 +390,7 @@ def define_fps(t, v, lt=None):
             "wcd938x_slave_dlkm",
             "wcd939x_dlkm",
             "wcd939x_slave_dlkm",
+            "aw882xx_dlkm",
             "wcd9378_dlkm",
             "wcd9378_slave_dlkm"
         ],
