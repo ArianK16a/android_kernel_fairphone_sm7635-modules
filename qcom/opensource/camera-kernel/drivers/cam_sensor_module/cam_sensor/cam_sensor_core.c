@@ -997,6 +997,11 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 	int rc = 0;
 	uint32_t chipid = 0;
 	struct cam_camera_slave_info *slave_info;
+	/*Begin zihao.li for [Task][FP5-162] FP5 add camera deviceinfo on 20230331*/
+	extern unsigned char CamNameB[128]; //Rear camera
+	extern unsigned char CamNameF[128]; //Front camera
+	extern unsigned char CamNameB2[128];//Wide camera
+	/*End   zihao.li for [Task][FP5-162] FP5 add camera deviceinfo on 20230331*/
 
 	slave_info = &(s_ctrl->sensordata->slave_info);
 
@@ -1024,6 +1029,20 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 				slave_info->sensor_id);
 		return -ENODEV;
 	}
+	/*Begin zihao.li for [Task][FP5-162] FP5 add camera deviceinfo on 20230331*/
+	if(chipid == 0x896) {
+		strcpy(CamNameB, "SONY_IMX896");
+	}
+	else if(chipid == 0x4841) {
+		strcpy(CamNameF, "SAMSUNG_S5KJN1");
+	}
+	else if(chipid == 0x0d42) {
+		strcpy(CamNameB2, "OmniVision_13B10");
+	}
+	else {
+		CAM_ERR(CAM_SENSOR, "FP6 Invalid sensor id %d", chipid);
+	}
+	/*End   zihao.li for [Task][FP5-162] FP5 add camera deviceinfo on 20230331*/
 	return rc;
 }
 
