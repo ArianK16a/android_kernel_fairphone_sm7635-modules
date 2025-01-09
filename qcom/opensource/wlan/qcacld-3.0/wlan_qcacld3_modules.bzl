@@ -31,6 +31,7 @@ _target_chipset_map = {
         "peach",
         "kiwi-v2",
         "qca6750",
+        "wcn6450",
     ],
 }
 
