@@ -60,8 +60,6 @@ def _define_target_modules(target, variant, registry, modules, product = None, c
            kernel_build = "{}_{}_{}".format(target, variant, product)
         else:
            kernel_build = "{}_{}".format(target, variant)
-    if target == "fps":
-        kernel_build = "{}_{}_volcano".format(target, variant)
 
     dist_target_name = "{}_audio_dist".format(kernel_build)
     data = [":{}_audio".format(kernel_build)]
