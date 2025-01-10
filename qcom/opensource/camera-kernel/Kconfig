@@ -43,6 +43,12 @@ config SPECTRA_SENSOR
 	  eeprom, flash, csiphy all other module will be included
 	  to make the sensor functional.
 
+config OIS_DW9784
+	bool "enable camera OIS DW9784"
+	help
+	  This is enabling camera OIS DW9784.
+	  OIS DW9784 files will be included to enable the driver.
+
 config SPECTRA_USE_CLK_CRM_API
 	bool "enable camera cesta clk feature"
 	help
