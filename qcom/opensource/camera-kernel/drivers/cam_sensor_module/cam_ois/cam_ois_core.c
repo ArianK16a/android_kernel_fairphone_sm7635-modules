@@ -15,7 +15,9 @@
 #include "cam_res_mgr_api.h"
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
-
+#ifdef CONFIG_OIS_DW9784
+extern int dw9784_download_open_camera(struct cam_ois_ctrl_t *o_ctrl);
+#endif
 #define CAM_OIS_FW_VERSION_CHECK_MASK 0x1
 
 static inline uint64_t swap_high_byte_and_low_byte(uint8_t *src,
@@ -1304,11 +1306,19 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			CAM_ERR(CAM_OIS,
 				"Cannot apply Init settings: rc = %d",
 				rc);
+			#ifdef CONFIG_OIS_DW9784
+			//goto pwr_dwn; //delete here,if the ois driver ic no need init setting
+                        #else
 			goto pwr_dwn;
+                        #endif
 		} else {
 			CAM_DBG(CAM_OIS, "apply Init settings success");
 		}
-
+                #ifdef CONFIG_OIS_DW9784
+                //check fw and download&init ois
+                CAM_ERR(CAM_OIS, "jinghuang dw9784_download_open_camera");
+                dw9784_download_open_camera(o_ctrl);
+                #endif
 		if (o_ctrl->is_ois_calib) {
 			rc = cam_ois_apply_settings(o_ctrl,
 				&o_ctrl->i2c_calib_data);

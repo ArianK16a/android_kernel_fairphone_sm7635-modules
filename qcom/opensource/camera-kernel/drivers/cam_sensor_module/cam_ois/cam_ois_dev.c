@@ -11,7 +11,9 @@
 #include "cam_debug_util.h"
 #include "camera_main.h"
 #include "cam_compat.h"
-
+#ifdef CONFIG_OIS_DW9784
+extern int ois_creat_sysfs(struct cam_ois_ctrl_t *o_ctrl);
+#endif 
 static struct cam_i3c_ois_data {
 	struct cam_ois_ctrl_t                       *o_ctrl;
 	struct completion                            probe_complete;
@@ -413,6 +415,10 @@ static int cam_ois_component_bind(struct device *dev,
 	init_completion(&g_i3c_ois_data[o_ctrl->soc_info.index].probe_complete);
 
 	CAM_DBG(CAM_OIS, "Component bound successfully");
+#ifdef CONFIG_OIS_DW9784
+        CAM_INFO(CAM_OIS, "ois_creat_sysfs");
+        ois_creat_sysfs(o_ctrl);
+#endif
 	return rc;
 unreg_subdev:
 	cam_unregister_subdev(&(o_ctrl->v4l2_dev_str));
