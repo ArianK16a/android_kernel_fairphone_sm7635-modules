@@ -275,6 +275,11 @@ camera-$(CONFIG_SPECTRA_SENSOR) += \
 	drivers/cam_sensor_module/cam_flash/cam_flash_soc.o \
 	drivers/cam_sensor_module/cam_sensor_module_debug.o
 
+#add ois makefie
+camera-$(CONFIG_OIS_DW9784) += \
+	drivers/cam_sensor_module/cam_ois/dw9784_ois.o
+#ccflags-$(CONFIG_SPECTRA_SENSOR) += -DCONFIG_OIS_DW9784
+
 camera-$(CONFIG_SPECTRA_CUSTOM) += \
 	drivers/cam_cust/cam_custom_hw_mgr/cam_custom_hw1/cam_custom_sub_mod_soc.o \
 	drivers/cam_cust/cam_custom_hw_mgr/cam_custom_hw1/cam_custom_sub_mod_dev.o \
