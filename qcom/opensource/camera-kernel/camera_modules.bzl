@@ -232,6 +232,12 @@ def _define_module(target, variant, lunch_target=None):
                     "drivers/cam_sensor_module/cam_sensor_module_debug.c",
                 ],
             },
+            "CONFIG_OIS_DW9784": {
+                True: [
+                    
+                    "drivers/cam_sensor_module/cam_ois/dw9784_ois.c",
+                ],
+            },
             "CONFIG_SPECTRA_CUSTOM": {
                 True: [
                     "drivers/cam_cust/cam_custom_hw_mgr/cam_custom_hw1/cam_custom_sub_mod_soc.c",
