@@ -724,7 +724,7 @@ void dw9784_shutdown_mode(struct cam_ois_ctrl_t *o_ctrl)
 	os_mdelay(1);
 }
 
-void dw9784_ois_reset(struct cam_ois_ctrl_t *o_ctrl)
+int dw9784_ois_reset(struct cam_ois_ctrl_t *o_ctrl)
 {
 	printk("[dw9784_ois_reset] start ois reset");
 	write_reg_16bit_value_16bit(o_ctrl,0xD002, 0x0001); /* logic reset */
@@ -733,6 +733,7 @@ void dw9784_ois_reset(struct cam_ois_ctrl_t *o_ctrl)
 	os_mdelay(25);
 	write_reg_16bit_value_16bit(o_ctrl,0xEBF1, 0x56FA); /* User protection release */
 	printk("[dw9784_ois_reset] finish");
+	return FUNC_PASS;
 }
 
 int dw9784_ois_on(struct cam_ois_ctrl_t *o_ctrl)
@@ -1413,14 +1414,17 @@ static ssize_t oisreg_store(struct class *class, struct class_attribute *attr,
 }
 
 
-
+static char data_buff[10];
 /****************************************
 add by jinghuang
 show:
 ****************************************/
 static ssize_t oisops_show(struct class *class, struct class_attribute *attr, char *buf){
+	uint32_t size =0;
     printk("ois oisops_show enter");
-    return 0;
+	size = strlen(data_buff);
+	strcpy(buf,data_buff);
+    return size;
 }
 /****************************************
 add by jinghuang
@@ -1436,6 +1440,7 @@ static ssize_t oisops_store(struct class *class, struct class_attribute *attr,
                             const char *buf, size_t count){
     struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
     char cmd_buff[2];
+	int32_t ret=-1;
     memset(cmd_buff,0,2);
     if(!o_ctrl){
         CAM_ERR(CAM_OIS, "o_ctrl is null");
@@ -1445,19 +1450,21 @@ static ssize_t oisops_store(struct class *class, struct class_attribute *attr,
     printk("oisops_store:cmd_buff=%s",cmd_buff);
 
     if(cmd_buff[0]=='0')
-        dw9784_gyro_ofs_calibration(o_ctrl);
+        ret=dw9784_gyro_ofs_calibration(o_ctrl);
     else if(cmd_buff[0]=='1')
-        dw9784_ois_reset(o_ctrl);
+        ret=dw9784_ois_reset(o_ctrl);
     else if(cmd_buff[0]=='2')
-        dw9784_servo_on(o_ctrl);
+       ret=dw9784_servo_on(o_ctrl);
     else if(cmd_buff[0]=='3')
-        dw9784_ois_on(o_ctrl);
+        ret=dw9784_ois_on(o_ctrl);
     else if(cmd_buff[0]=='4')
-        dw9784_ois_off(o_ctrl);
+        ret=dw9784_ois_off(o_ctrl);
     else if(cmd_buff[0]=='5')
-        dw9784_module_cal_store(o_ctrl);
+        ret=dw9784_module_cal_store(o_ctrl);
     else
        printk("oisops_store:cmd is not support");
+	memset(data_buff,0,sizeof(data_buff));//0:successfull other:fail
+	snprintf(data_buff,3,"%d",ret);
     return count;
 
 }

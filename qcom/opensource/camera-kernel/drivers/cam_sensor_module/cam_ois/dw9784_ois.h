@@ -65,7 +65,7 @@ void dw9784_code_pt_off(struct cam_ois_ctrl_t *o_ctrl);
 void dw9784_pid_erase(struct cam_ois_ctrl_t *o_ctrl);
 void dw9784_fw_eflash_erase(struct cam_ois_ctrl_t *o_ctrl);
 void dw9784_shutdown_mode(struct cam_ois_ctrl_t *o_ctrl);
-void dw9784_ois_reset(struct cam_ois_ctrl_t *o_ctrl);
+int dw9784_ois_reset(struct cam_ois_ctrl_t *o_ctrl);
 int dw9784_ois_on(struct cam_ois_ctrl_t *o_ctrl);
 int dw9784_servo_on(struct cam_ois_ctrl_t *o_ctrl);
 int dw9784_servo_off(struct cam_ois_ctrl_t *o_ctrl);
