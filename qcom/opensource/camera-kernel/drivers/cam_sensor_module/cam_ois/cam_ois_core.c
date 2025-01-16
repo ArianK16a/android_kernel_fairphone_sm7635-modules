@@ -1314,11 +1314,7 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		} else {
 			CAM_DBG(CAM_OIS, "apply Init settings success");
 		}
-                #ifdef CONFIG_OIS_DW9784
-                //check fw and download&init ois
-                CAM_ERR(CAM_OIS, "jinghuang dw9784_download_open_camera");
-                dw9784_download_open_camera(o_ctrl);
-                #endif
+
 		if (o_ctrl->is_ois_calib) {
 			rc = cam_ois_apply_settings(o_ctrl,
 				&o_ctrl->i2c_calib_data);
@@ -1338,8 +1334,13 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			}
 		}
 
-		o_ctrl->cam_ois_state = CAM_OIS_CONFIG;
-
+        o_ctrl->cam_ois_state = CAM_OIS_CONFIG;
+        #ifdef CONFIG_OIS_DW9784
+        //check fw and download&init ois
+        CAM_ERR(CAM_OIS, "jinghuang dw9784_download_open_camera");
+        dw9784_download_open_camera(o_ctrl);
+        #endif
+		
 		rc = delete_request(&o_ctrl->i2c_fwinit_data);
 		if (rc < 0) {
 			CAM_WARN(CAM_OIS,
