@@ -44,7 +44,7 @@ KBUILD_EXTRA_SYMBOLS := \
     $(OUT_DIR)/../sm7635-modules/qcom/opensource/datarmnet-ext/mem/Module.symvers \
     $(OUT_DIR)/../sm7635-modules/qcom/opensource/dataipa/drivers/platform/msm/Module.symvers
 
-KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(KBUILD_EXTRA_SYMBOLS)
+KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS="$(KBUILD_EXTRA_SYMBOLS)"
 
 all:
 	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
