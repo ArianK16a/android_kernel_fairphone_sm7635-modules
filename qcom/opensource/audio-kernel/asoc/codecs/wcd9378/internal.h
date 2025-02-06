@@ -146,6 +146,9 @@ struct wcd9378_priv {
 	/* wcd to swr dmic notification */
 	bool notify_swr_dmic;
 	struct blocking_notifier_head notifier;
+	//#ifdef CONFIG_T2M_SND_HAC
+	struct device_node *hac_pa_gpio_p;
+	//#endif
 };
 
 struct wcd9378_micbias_setting {
@@ -169,6 +172,9 @@ struct wcd9378_pdata {
 
 	struct cdc_regulator *regulator;
 	int num_supplies;
+	//#ifdef CONFIG_T2M_SND_HAC
+	struct device_node *hac_pa_gpio_p;
+	//#endif
 };
 
 struct wcd_ctrl_platform_data {
