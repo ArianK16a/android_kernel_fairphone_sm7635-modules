@@ -1936,6 +1936,34 @@ static int wcd9378_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 	return ret;
 }
 
+//#ifdef CONFIG_T2M_SND_HAC
+static int msm_enable_hac_pa(struct snd_soc_dapm_widget *w,
+                       struct snd_kcontrol *kcontrol,
+                       int event)
+{
+	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	struct wcd9378_priv *wcd9378 = snd_soc_component_get_drvdata(component);
+	int ret = 0;
+
+	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__, w->name, event);
+	switch (event) {
+		case SND_SOC_DAPM_POST_PMU:
+			ret = msm_cdc_pinctrl_select_active_state(wcd9378->hac_pa_gpio_p);
+			if (ret) {
+				pr_err("%s:HAC gpio set cannot be de-activated %s\n",  __func__, "hac_pa");
+			}
+			break;
+		case SND_SOC_DAPM_PRE_PMD:
+			ret = msm_cdc_pinctrl_select_sleep_state(wcd9378->hac_pa_gpio_p);
+			if (ret) {
+				pr_err("%s:HAC gpio set cannot be de-activated %s\n", __func__, "hac_pa");
+			}
+			break;
+	};
+	return ret;
+}
+//#endif
+
 static int wcd9378_get_hph_pwr_level(int hph_mode)
 {
 	switch (hph_mode) {
@@ -3435,6 +3463,16 @@ static const struct snd_kcontrol_new dmic6_switch[] = {
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
 };
 
+//#ifdef CONFIG_T2M_SND_HAC
+static int msm_enable_hac_pa(struct snd_soc_dapm_widget *w,
+                       struct snd_kcontrol *kcontrol,
+                       int event);
+
+static const struct snd_kcontrol_new hac_pa_switch[] = {
+    SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+//#endif
+
 static const char * const adc1_mux_text[] = {
 	"CH1_AMIC_DISABLE", "CH1_AMIC1", "CH1_AMIC2", "CH1_AMIC3", "CH1_AMIC4"
 };
@@ -3732,6 +3770,19 @@ static const struct snd_soc_dapm_widget wcd9378_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("AUX"),
 	SND_SOC_DAPM_OUTPUT("HPHL"),
 	SND_SOC_DAPM_OUTPUT("HPHR"),
+
+//#ifdef CONFIG_T2M_SND_HAC
+/*HAC playback*/
+	SND_SOC_DAPM_MIXER("HAC_PA", SND_SOC_NOPM, 0, 0,
+               hac_pa_switch, ARRAY_SIZE(hac_pa_switch)),
+	SND_SOC_DAPM_PGA_E("HAC PGA", SND_SOC_NOPM, 0, 0, NULL, 0,
+                msm_enable_hac_pa,
+                SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
+                SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_INPUT("HAC_RX"),
+	SND_SOC_DAPM_OUTPUT("HAC"),
+//#endif
 };
 
 static const struct snd_soc_dapm_route wcd9378_audio_map[] = {
@@ -3828,6 +3879,13 @@ static const struct snd_soc_dapm_route wcd9378_audio_map[] = {
 	{"AUX_MIXER", "Switch", "SA SEQUENCER",},
 	{"AUX PGA", NULL, "AUX_MIXER"},
 	{"AUX", NULL, "AUX PGA"},
+
+//#ifdef CONFIG_T2M_SND_HAC
+/*HAC playback*/
+	{"HAC_PA", "Switch", "HAC_RX"},
+	{"HAC PGA", NULL, "HAC_PA"},
+	{"HAC", NULL, "HAC PGA"},
+//#endif
 };
 
 static ssize_t wcd9378_version_read(struct snd_info_entry *entry,
@@ -4049,6 +4107,17 @@ static int wcd9378_soc_codec_probe(struct snd_soc_component *component)
 		ret = -EINVAL;
 		goto exit;
 	}
+
+//#ifdef CONFIG_T2M_SND_HAC
+	/*snd_soc_dapm_new_controls(dapm, msm_hac_dapm_widgets,
+                ARRAY_SIZE(msm_hac_dapm_widgets));
+
+	snd_soc_dapm_add_routes(dapm, msm_hac_audio_map,
+                    ARRAY_SIZE(msm_hac_audio_map));*/
+
+	snd_soc_dapm_ignore_suspend(dapm, "HAC");
+	snd_soc_dapm_ignore_suspend(dapm, "HAC_RX");
+//#endif
 
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC2");
@@ -4295,6 +4364,18 @@ struct wcd9378_pdata *wcd9378_populate_dt_data(struct device *dev)
 				dev->of_node->full_name);
 		return NULL;
 	}
+//#ifdef CONFIG_T2M_SND_HAC
+	/* parse hac configuration */
+	pdata->hac_pa_gpio_p = of_parse_phandle(dev->of_node,
+			"qcom,wcd-hac-pa-gpios", 0);
+
+	if (!pdata->hac_pa_gpio_p) {
+		dev_err(dev, "%s: Looking up %s property in node %s failed\n",
+				__func__, "qcom,wcd-hac-pa-gpios",
+				dev->of_node->full_name);
+		return NULL;
+	}
+//#endif
 
 	/* Parse power supplies */
 	msm_cdc_get_power_supplies(dev, &pdata->regulator,
@@ -4528,6 +4609,9 @@ static int wcd9378_probe(struct platform_device *pdev)
 	dev->platform_data = pdata;
 
 	wcd9378->rst_np = pdata->rst_np;
+//#ifdef CONFIG_T2M_SND_HAC
+	wcd9378->hac_pa_gpio_p = pdata->hac_pa_gpio_p;
+//#endif
 	ret = msm_cdc_init_supplies(dev, &wcd9378->supplies,
 				    pdata->regulator, pdata->num_supplies);
 	if (!wcd9378->supplies) {
