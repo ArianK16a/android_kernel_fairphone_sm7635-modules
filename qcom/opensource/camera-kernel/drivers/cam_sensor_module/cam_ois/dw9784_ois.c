@@ -135,6 +135,7 @@ static int read_reg_16bit_value_16bit(struct cam_ois_ctrl_t *o_ctrl,
 
 	return ret;
 }
+#ifdef BLOCK_WRITE
 static int  i2c_block_write_reg( struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, uint32_t *data, uint32_t count ){
     uint32_t total_num =0,cnt=0;
 	struct cam_sensor_i2c_reg_setting i2c_reg_setting;
@@ -173,7 +174,7 @@ static int  i2c_block_write_reg( struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, u
     	i2c_reg_setting.reg_setting[cnt].data_mask = 0;
     }
 
-   /*0:use SEQ mode for i2c continuous write 1:use BURST mode for i2c continuous write*/
+   /*2:use SEQ mode for i2c continuous write 1:use BURST mode for i2c continuous write*/
     ret = camera_io_dev_write_continuous(&(o_ctrl->io_master_info),&i2c_reg_setting, 0);
 
 	if (ret < 0)
@@ -182,7 +183,7 @@ static int  i2c_block_write_reg( struct cam_ois_ctrl_t *o_ctrl, uint32_t addr, u
 	kfree(i2c_reg_setting.reg_setting);
 	return ret;
 }
-
+#endif
 void GenerateFirmwareContexts(void)
 {
 	g_firmwareContext.version = DW9784_FW_VERSION;
@@ -191,7 +192,7 @@ void GenerateFirmwareContexts(void)
 	g_downloadByForce = 0;
 	g_updateFw = 0;
 }
-
+int froce_enable=0;
 int dw9784_download_open_camera(struct cam_ois_ctrl_t *o_ctrl)
 {
 	int ret=0;
@@ -266,8 +267,9 @@ int dw9784_download_open_camera(struct cam_ois_ctrl_t *o_ctrl)
 		pre_module_state = 0x0000; /* normal state */
 	}
 	
-	if (g_downloadByForce || g_updateFw)
+	if (g_downloadByForce || g_updateFw||froce_enable)
 	{
+        froce_enable=0;
 		printk("[dw9784_download_open_camera] start downloading the latest version firmware, ver: 0x%04X", DW9784_FW_VERSION);
 		if(dw9784_download_fw(o_ctrl,pre_module_state) == EOK)
 		{
@@ -357,18 +359,20 @@ int dw9784_download_fw(struct cam_ois_ctrl_t *o_ctrl,int module_state)
 	/* updates the module status before firmware download */
 	*(g_firmwareContext.fwContentPtr + MCS_SIZE_W -1) = module_state;
 	/*write 1block(256*2bytes)/once*/
+	#ifdef BLOCK_WRITE
 	for (i = 0; i < MCS_SIZE_W; i += DATPKT_SIZE)
 	{
 		addr = MCS_START_ADDRESS + i;
 		i2c_block_write_reg(o_ctrl, addr, g_firmwareContext.fwContentPtr + i, DATPKT_SIZE );
 	}
+	#else
 	/*write 2Bytes/once*/
-	/*for (i = 0; i < MCS_SIZE_W; i++)
+	for (i = 0; i < MCS_SIZE_W; i++)
 	{
 		addr = MCS_START_ADDRESS + i;
 		write_reg_16bit_value_16bit(o_ctrl,addr, *(g_firmwareContext.fwContentPtr + i));
-	}*/
-		
+	}
+	#endif
 #if 0
 	/* Check by reading fw flash directly to i2c */
 	/* It is disabled by default */
@@ -390,6 +394,7 @@ int dw9784_download_fw(struct cam_ois_ctrl_t *o_ctrl,int module_state)
 	}
 	printk("[dw9784_download_fw] firmware verification pass");
 #endif
+	os_mdelay(10);
 
 	/* step 6. Writes 512Byte FW(PID) data to IF flash.	(FMC register check) */
 	write_reg_16bit_value_16bit(o_ctrl,0xDE01, 0x1000);
@@ -418,18 +423,20 @@ int dw9784_download_fw(struct cam_ois_ctrl_t *o_ctrl,int module_state)
 	printk("[dw9784_download_fw] start firmware/pid download");
 	/* step 8. firmware sequential write to flash */
 	/*write 1block(256*2bytes)/once*/
+#ifdef BLOCK_WRITE
 	for (i = 0; i < PID_SIZE_W; i += DATPKT_SIZE)
 	{
 		addr = IF_START_ADDRESS + i;
 		i2c_block_write_reg(o_ctrl, addr, g_firmwareContext.fwContentPtr + MCS_SIZE_W + i, DATPKT_SIZE );
 	}
-
+#else
 	/*write 2Bytes/once*/
-/*	for (i = 0; i < PID_SIZE_W; i++)
+	for (i = 0; i < PID_SIZE_W; i++)
 	{
 		addr = IF_START_ADDRESS + i;
 		write_reg_16bit_value_16bit(o_ctrl,addr, *(g_firmwareContext.fwContentPtr + MCS_SIZE_W + i));
-	}*/
+	}
+	#endif
 	printk("[dw9784_download_fw] write firmware/pid to flash");
 	
 #if 0
@@ -470,6 +477,114 @@ int dw9784_download_fw(struct cam_ois_ctrl_t *o_ctrl,int module_state)
 		printk("[dw9784_download_fw] finish");
 		return ERROR_FW_CHECKSUM;
 	}
+}
+/*****************************************************************
+jinghuang  fw dump
+******************************************************************/
+int dw9784_fw_force_enable(struct cam_ois_ctrl_t *o_ctrl)
+{
+    froce_enable=1;
+
+    return FUNC_PASS;
+}
+int dw9784_fw_dump(struct cam_ois_ctrl_t *o_ctrl)
+{
+    int i =0;
+    unsigned int addr;
+    unsigned int FMC;
+    unsigned int data;
+    unsigned int error_count =0;
+
+    /* step 1: MTP Erase and DSP Disable for firmware 0x8000 write */
+    write_reg_16bit_value_16bit(o_ctrl,0xd001, 0x0000);
+
+    /* step 2: MTP setup */
+    dw9784_flash_acess(o_ctrl);
+    os_mdelay(1);
+
+    /* step 3. FMC register check */
+    write_reg_16bit_value_16bit(o_ctrl,0xDE01, 0x0000); // FMC block FW select
+    os_mdelay(10);
+    read_reg_16bit_value_16bit(o_ctrl,0xDE01, &FMC);
+    os_mdelay(10);
+    if (FMC != 0)
+    {
+        printk("[dw9784_fw_dump] FMC register value 1st warning : %04x", FMC);
+        write_reg_16bit_value_16bit(o_ctrl,0xDE01, 0x0000);
+        os_mdelay(10);
+        FMC = 0; // initialize FMC value
+        read_reg_16bit_value_16bit(o_ctrl,0xDE01, &FMC);
+        if (FMC != 0)
+        {
+            printk("[dw9784_fw_dump] 2nd FMC register value 2nd warning : %04x", FMC);
+            printk("[dw9784_fw_dump] stop f/w dump");
+            return ERROR_FW_DOWN_FMC;
+        }
+    }
+
+    /* step 4. code protection off */
+    dw9784_code_pt_off(o_ctrl);
+    printk("[dw9784_fw_dump] start firmware dump");
+    error_count =0;
+
+    for (i = 0; i <  MCS_SIZE_W; i ++)
+    {
+        addr = MCS_START_ADDRESS + i;
+        read_reg_16bit_value_16bit(o_ctrl,addr, &data);
+        if(data!=DW9784_FW[i]){
+            printk("[dw9784_fw_dump]:block0 address=0x%04x,data=0x%04x,DW9784_FW[%d]=0x%x",addr,data,i,DW9784_FW[i]);
+            error_count++;
+        }
+        if(i>(MCS_SIZE_W-10))
+            printk("[dw9784_fw_dump]:block0 address=0x%04x,data=0x%04x,DW9784_FW[%d]=0x%x",addr,data,i,DW9784_FW[i]);
+    }
+	if(error_count ==0){
+	printk("[dw9784_fw_dump]:block0 check ok");
+	}
+
+    // for(i=0;i<0x2900;i=i+5){
+        //printk("[dw9784_fw_dump]:i=(%5d~%5d)DW9784_FW=0x%04x, 0x%04x, 0x%04x, 0x%04x, 0x%04x, ",i,i+4,DW9784_FW[i],DW9784_FW[i+1],DW9784_FW[i+2],DW9784_FW[i+3],DW9784_FW[i+4]);
+        //msleep(10);
+    // }
+   os_mdelay(10);
+
+    /* step 6. Writes 512Byte FW(PID) data to IF flash. (FMC register check) */
+    write_reg_16bit_value_16bit(o_ctrl,0xDE01, 0x1000);
+    os_mdelay(10);
+    read_reg_16bit_value_16bit(o_ctrl,0xDE01, &FMC);
+    os_mdelay(10);
+    if (FMC != 0x1000)
+    {
+        printk("[dw9784_download_fw] IF FMC register value 1st warning : %04x", FMC);
+        write_reg_16bit_value_16bit(o_ctrl,0xDE01, 0x1000);
+        os_mdelay(10);
+        FMC = 0; // initialize FMC value
+       read_reg_16bit_value_16bit(o_ctrl,0xDE01, &FMC);
+        if (FMC != 0x1000)
+        {
+            printk("[dw9784_fw_dump] 2nd IF FMC register value 2nd fail : %04x", FMC);
+            printk("[dw9784_fw_dump] stop firmware dump");
+            return ERROR_FW_DOWN_FMC;
+        }
+    }
+
+    printk("[dw9784_fw_dump] start firmware/pid dump");
+    /*write 2Bytes/once*/
+    error_count =0;
+    for (i = 0; i < PID_SIZE_W; i++)
+    {
+        addr = IF_START_ADDRESS + i;
+        read_reg_16bit_value_16bit(o_ctrl,addr, &data);
+        if(data!=DW9784_FW[i+MCS_SIZE_W]){
+            printk("[dw9784_fw_dump]:block1 address=0x%04x,data=0x%04x,DW9784_FW[%d]=0x%x",addr,data,i,DW9784_FW[i+MCS_SIZE_W]);
+        error_count++;
+        }
+	}
+    if(error_count ==0){
+        printk("[dw9784_fw_dump]:block1 check ok");
+    }
+
+    return FUNC_PASS;
 }
 
 int dw9784_whoami_chk(struct cam_ois_ctrl_t *o_ctrl)
@@ -1435,6 +1550,8 @@ store cmd:
 '3'---->dw9784_ois_on
 '4'---->dw9784_ois_off
 '5'---->dw9784_module_cal_store
+'6'---->dw9784_fw_dump //fw dump for check
+'7'---->dw9784_fw_force_enable  //force update the fw
 ****************************************/
 static ssize_t oisops_store(struct class *class, struct class_attribute *attr,
                             const char *buf, size_t count){
@@ -1461,6 +1578,10 @@ static ssize_t oisops_store(struct class *class, struct class_attribute *attr,
         ret=dw9784_ois_off(o_ctrl);
     else if(cmd_buff[0]=='5')
         ret=dw9784_module_cal_store(o_ctrl);
+    else if(cmd_buff[0]=='6')//fw dump for check
+        ret=dw9784_fw_dump(o_ctrl);
+    else if(cmd_buff[0]=='7')//fw force enable
+        ret=dw9784_fw_force_enable(o_ctrl);
     else
        printk("oisops_store:cmd is not support");
 	memset(data_buff,0,sizeof(data_buff));//0:successfull other:fail
