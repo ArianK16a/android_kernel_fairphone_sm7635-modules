@@ -81,8 +81,16 @@ ddk_headers(
 )
 
 ddk_headers(
+    name = "eswin_ts_headers",
+    hdrs = glob([
+            "eswin_touch/*.h"
+        ]
+    )
+)
+
+ddk_headers(
     name = "touch_drivers_headers",
-    hdrs = [":goodix_ts_headers", ":nt36xxx_headers", ":qts_headers", ":focaltech_headers", ":synaptics_tcm_headers", ":glink_interface_ts_headers", ":pt_headers", ":raydium_headers", ":config_headers"]
+    hdrs = [":goodix_ts_headers", ":nt36xxx_headers", ":qts_headers", ":focaltech_headers", ":synaptics_tcm_headers", ":glink_interface_ts_headers", ":pt_headers", ":raydium_headers", ":config_headers",  ":eswin_ts_headers"]
 )
 
 load(":target.bzl", "define_touch_target")
