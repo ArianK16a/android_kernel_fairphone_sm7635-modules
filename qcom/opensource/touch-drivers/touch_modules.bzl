@@ -162,3 +162,19 @@ module_entry(
             "raydium/chip_raydium/ic_drv_interface.c"
     ]
 )
+
+#define ddk_module() for eswin_ts
+module_entry(
+    name = "eswin_ts",
+    config_option = "CONFIG_TOUCHSCREEN_EPHTouch",
+    srcs = [
+            "eswin_touch/eswin_eph861x.c",
+            "eswin_touch/eswin_eph861x_bootloader.c",
+            "eswin_touch/eswin_eph861x_comms.c",
+            "eswin_touch/eswin_eph861x_eswin.c",
+            "eswin_touch/eswin_eph861x_i2c.c",
+            "eswin_touch/eswin_eph861x_spi.c",
+            "eswin_touch/eswin_eph861x_tlv_command.c",
+            "eswin_touch/eswin_eph861x_tlv_report.c",
+    ]
+)
