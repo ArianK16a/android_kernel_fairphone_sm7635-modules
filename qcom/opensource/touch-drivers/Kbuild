@@ -163,6 +163,32 @@ ifeq ($(CONFIG_TOUCHSCREEN_GOODIX_BRL), y)
 	obj-$(CONFIG_MSM_TOUCH) += goodix_ts.o
 endif
 
+ifeq ($(CONFIG_TOUCHSCREEN_EPHTouch), y)
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_bootloader.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_comms.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_eswin.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_i2c.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_project_config.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_spi.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_tlv.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_tlv_command.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_tlv_report.h
+	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_types.h
+
+	eswin_ts-y := \
+         ./eswin_touch/eswin_eph861x.o \
+         ./eswin_touch/eswin_eph861x_bootloader.o \
+         ./eswin_touch/eswin_eph861x_comms.c \
+         ./eswin_touch/eswin_eph861x_eswin.c \
+         ./eswin_touch/eswin_eph861x_i2c.c \
+         ./eswin_touch/eswin_eph861x_spi.c \
+         ./eswin_touch/eswin_eph861x_tlv_command.c \
+         ./eswin_touch/eswin_eph861x_tlv_report.c
+
+	obj-$(CONFIG_MSM_TOUCH) += eswin_ts.o
+endif
+
 ifeq ($(CONFIG_TOUCHSCREEN_ATMEL_MXT), y)
 
 	atmel_mxt_ts-y := \
