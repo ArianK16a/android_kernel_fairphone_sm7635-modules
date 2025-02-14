@@ -18,7 +18,8 @@ ifeq ($(TOUCH_DLKM_ENABLE),  true)
                 PRODUCT_PACKAGES += $(KERNEL_MODULES_OUT)/nt36xxx-i2c.ko \
                         $(KERNEL_MODULES_OUT)/goodix_ts.ko \
                         $(KERNEL_MODULES_OUT)/atmel_mxt_ts.ko \
-                        $(KERNEL_MODULES_OUT)/qts.ko
+                        $(KERNEL_MODULES_OUT)/qts.ko \
+                        $(KERNEL_MODULES_OUT)/eswin_ts.ko
         else ifeq ($(TARGET_BOARD_PLATFORM), kalama)
                 PRODUCT_PACKAGES += $(KERNEL_MODULES_OUT)/nt36xxx-i2c.ko \
                         $(KERNEL_MODULES_OUT)/goodix_ts.ko \
@@ -46,7 +47,8 @@ ifeq ($(TOUCH_DLKM_ENABLE),  true)
         else ifeq ($(TARGET_BOARD_PLATFORM), volcano)
                 PRODUCT_PACKAGES += $(KERNEL_MODULES_OUT)/goodix_ts.ko \
                         $(KERNEL_MODULES_OUT)/focaltech_fts.ko \
-		        $(KERNEL_MODULES_OUT)/qts.ko
+		        $(KERNEL_MODULES_OUT)/qts.ko \
+			$(KERNEL_MODULES_OUT)/eswin_ts.ko
         else
                 PRODUCT_PACKAGES += $(KERNEL_MODULES_OUT)/nt36xxx-i2c.ko \
                         $(KERNEL_MODULES_OUT)/goodix_ts.ko \
