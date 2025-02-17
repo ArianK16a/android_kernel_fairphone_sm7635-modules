@@ -161,7 +161,7 @@ static int eph_read_and_process_messages(struct eph_data *ephdata)
     struct device *dev = &ephdata->commsdevice->dev;
     int ret_val;
 
-    //dev_dbg(&ephdata->commsdevice->dev, "%s >\n", __func__);
+    dev_dbg(&ephdata->commsdevice->dev, "%s >\n", __func__);
 
     mutex_lock(&ephdata->comms_mutex);
     /* Read report */
@@ -1529,6 +1529,35 @@ static int eph_stop(struct eph_data *ephdata)
     return 0;
 }
 
+static int eph_heartbeat_start(struct eph_data *ephdata)
+{
+    int ret = 0;
+    struct device *dev = &ephdata->commsdevice->dev;
+
+    if (atomic_read(&ephdata->heartbeat_state) > 0) {
+        dev_dbg(dev, "heartbeart already sched\n");
+	    return ret;
+    }
+    atomic_set(&ephdata->heartbeat_state, 1);
+    schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(5000));
+    return ret;
+}
+
+static int eph_heartbeat_stop(struct eph_data *ephdata)
+{
+    int ret = 0;
+    struct device *dev = &ephdata->commsdevice->dev;
+
+    if (atomic_read(&ephdata->heartbeat_state) == 0) {
+        dev_dbg(dev, "heartbeart already stopped\n");
+	return ret;
+    }
+    atomic_set(&ephdata->heartbeat_state, 0);
+    cancel_delayed_work(&ephdata->heartbeat_work);
+    flush_delayed_work(&ephdata->heartbeat_work);
+    return ret;
+}
+
 static int eph_input_open(struct input_dev *inputdev)
 {
     struct eph_data *ephdata = (struct eph_data *)input_get_drvdata(inputdev);
@@ -1582,17 +1611,28 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 			notification->notif_data.early_trigger);
 	switch (notification->notif_type) {
 	case DRM_PANEL_EVENT_UNBLANK:
-		if (!notification->notif_data.early_trigger)
+
+        if (notification->notif_data.early_trigger) {
+			ts_debug("resume notification pre commit\n");
+		} else {
 			eph_dev_enter_normal_mode(ephdata);
-	    // heartbeat work is needed
-            //schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(5000));
-            //schedule_work(&ephdata->force_baseline_work);
+	        // heartbeat work is needed
+            eph_heartbeat_start(ephdata);
+
+        }
 		break;
 
 	case DRM_PANEL_EVENT_BLANK:
-        // disable heartbeat
-		if (notification->notif_data.early_trigger)
-			eph_dev_enter_lp_mode(ephdata);
+
+		if (notification->notif_data.early_trigger) {
+            // disable heartbeat
+            eph_heartbeat_stop(ephdata);
+            eph_dev_enter_lp_mode(ephdata);
+
+        } else {
+			ts_debug("suspend notification post commit\n");
+		}
+
 		break;
 
 	case DRM_PANEL_EVENT_BLANK_LP:
@@ -1845,9 +1885,14 @@ static void heartbeat_work_handler(struct work_struct *work)
     struct device *dev = &ephdata->commsdevice->dev;
 
     dev_info(dev, "ic heartbeat work...\n");
+
+    if (atomic_read(&ephdata->heartbeat_state) <= 0)
+	    return;
+
     // check power
     if (!regulator_is_enabled(ephdata->reg_vdd)) {
-        schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(2000));
+        if (atomic_read(&ephdata->heartbeat_state))
+            schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(2000));
         return;
     }
     if (!regulator_is_enabled(ephdata->reg_avdd))
@@ -1890,16 +1935,19 @@ static void heartbeat_work_handler(struct work_struct *work)
         }
     }
 
-    schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(5000));
+    if (atomic_read(&ephdata->heartbeat_state))
+        schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(5000));
     return;
 
 ic_recovery:
     eph_recovery_device(ephdata);
-    schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(3000));
+    if (atomic_read(&ephdata->heartbeat_state))
+        schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(3000));
     return;
 ic_reset:
     eph_reset_device(ephdata);
-    schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(3000));
+    if (atomic_read(&ephdata->heartbeat_state))
+        schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(3000));
     return;
 }
 
@@ -2102,7 +2150,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     }
 
     //wait ic boot done
-    msleep(5000);
+    msleep(200);
 
     /* Need to have IRQ disabled before calling eph_initialize() as it re-enables it */
     disable_irq(ephdata->chg_irq);
@@ -2175,7 +2223,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     ephdata->lp = false;
     ephdata->irq_wake = false;
 
-    //schedule_delayed_work(&ephdata->heartbeat_work, msecs_to_jiffies(5000));
+    eph_heartbeat_start(ephdata);
 
     dev_info(dev, "%s <\n", __func__);
     return 0;
@@ -2211,7 +2259,7 @@ static void eph_remove(struct comms_device *commsdevice)
     struct eph_data *ephdata = eph_comms_driver_data_get(commsdevice);
     dev_info(&commsdevice->dev, "%s >\n", __func__);
 
-    cancel_delayed_work_sync(&ephdata->heartbeat_work);
+    eph_heartbeat_stop(ephdata);
 
     sysfs_remove_group(&commsdevice->dev.kobj, &eph_fw_attr_group);
     eph_sysfs_mem_access_remove(ephdata);
@@ -2321,6 +2369,7 @@ static int eph_dev_enter_lp_mode(struct eph_data *ephdata)
             ret_val = eph_gesture_mode_set(ephdata, ephdata->gesture_mode | BIT(0));
 	    } else { 
             // set tic in deep mode
+            disable_irq(ephdata->chg_irq);
 	        ret_val = eph_deep_mode_enable(ephdata, 1);
 	    }
 
@@ -2354,6 +2403,7 @@ static int eph_dev_enter_normal_mode(struct eph_data *ephdata)
 	    } else {
                 // wake up tic
                 ret_val = eph_deep_mode_enable(ephdata, 0);
+                enable_irq(ephdata->chg_irq);
                 // wait tic wake
                 msleep(200);
 	    }
