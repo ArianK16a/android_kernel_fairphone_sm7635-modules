@@ -154,10 +154,34 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		brightness = c_conn->thermal_max_brightness;
 
 	display->panel->bl_config.brightness = brightness;
+#if defined(CONFIG_ARCH_FPSPRING)
+	if (!strcmp(display->display_type, "primary")){
+		if(brightness <= 0){
+			bl_lvl = 0;
+		} else if(brightness >= 1 && brightness <= 2048){
+			//bl_lvl = (int)(1.713 * brightness + 7);
+			bl_lvl = brightness + 7 + mult_frac(brightness, 713, 1000);
+		} else if(brightness > 2048 && brightness < 4095){
+			//bl_lvl = (int)(0.283 * brightness + 2936);
+			bl_lvl = mult_frac(brightness, 283, 1000) + 2936;
+		} else {
+			bl_lvl = 4094;
+		}
+
+		if(bl_lvl > display->panel->bl_config.bl_max_level)	{
+			bl_lvl = display->panel->bl_config.bl_max_level;
+		}
+	} else {
+		bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
+				display->panel->bl_config.brightness_max_level);
+	}
+#elif
+
 	/* map UI brightness into driver backlight level with rounding */
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
 			display->panel->bl_config.brightness_max_level);
-
+#endif
+	SDE_DEBUG("backlight [%s] bl_lvl = %d brightness = %d \n",__func__,bl_lvl,brightness);
 	if (!bl_lvl && brightness)
 		bl_lvl = 1;
 
