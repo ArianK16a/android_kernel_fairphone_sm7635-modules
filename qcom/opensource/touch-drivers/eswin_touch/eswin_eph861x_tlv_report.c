@@ -540,7 +540,7 @@ int eph_buffer_report(struct eph_data *ephdata, u8 *message)
     /* Clear report buffer lock as access within the interrupt is complete */
     mutex_unlock(&ephdata->sysfs_report_buffer_lock);
 
-    //dev_dbg(&ephdata->commsdevice->dev, "eswin T:%d len:%d", tlvheader.type, tlvheader.length);
+    dev_dbg(&ephdata->commsdevice->dev, "eswin T:%d len:%d", tlvheader.type, tlvheader.length);
 
 
     return 0;

@@ -119,7 +119,7 @@ int eph_send_frames(struct eph_data *ephdata)
     ephflash->frame_count = 1;
 #ifdef IC_UPDATE_DETECT
     // skip dev info in the head of requested fw
-    ephflash->fw_pos = sizeof(struct eph_device_info);
+    ephflash->fw_pos = sizeof(struct eph_firmware_info);
 #else
     ephflash->fw_pos = 0;
 #endif
@@ -214,11 +214,13 @@ recheck:
             /* We expected to be waiting for frame data or waiting bootloader start 
              * but we got CRC fail so app failed its crc - start again and we should
             * be in waiting bootloader start */
+            dev_dbg(dev, "BL goto recheck\n");
             goto recheck;
         }
     }
     else
     {
+        dev_dbg(dev, "bl state is not in expected_next_state %d\n", expected_next_state);
         return -EINVAL;
     }
 
@@ -244,6 +246,7 @@ recheck:
 int eph_chg_force_bootloader(struct eph_data *ephdata)
 {
     struct device *dev = &ephdata->commsdevice->dev;
+    int i = 0;
     /* NOTE: interrupts on CHG should be disabled before calling this function */
 #if 0
     int ret_val;
@@ -255,7 +258,7 @@ int eph_chg_force_bootloader(struct eph_data *ephdata)
     gpio_set_value(ephdata->ephplatform->gpio_reset, GPIO_RESET_NO_HIGH);
     msleep((EPH_POWERON_DELAY));
 #else
-    for (int i = 0; i < 10; i++) {
+    for (i = 0; i < 10; i++) {
         gpio_set_value(ephdata->ephplatform->gpio_reset, GPIO_RESET_YES_LOW);
         msleep(EPH_RESET_HOLD_TIME);
         gpio_set_value(ephdata->ephplatform->gpio_reset, GPIO_RESET_NO_HIGH);
