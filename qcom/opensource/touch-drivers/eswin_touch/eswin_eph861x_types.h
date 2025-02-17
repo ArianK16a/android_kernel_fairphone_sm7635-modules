@@ -166,7 +166,7 @@ struct eph_firmware_info
     u16 application_version_minor;
     u16 bootloader_version;
     u8 crc;
-};
+} __packed;
 #endif
 
 /* Config update context */
@@ -240,6 +240,7 @@ struct eph_data
 
     struct work_struct force_baseline_work;
     struct delayed_work heartbeat_work;
+    atomic_t heartbeat_state;
 
     /* Indicates whether device is updating its device settings */
     bool updating_device_settings;
