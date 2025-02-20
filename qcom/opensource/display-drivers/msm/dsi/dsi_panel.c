@@ -1927,6 +1927,11 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-qsync-on-commands",
 	"qcom,mdss-dsi-qsync-off-commands",
 	"qcom,mdss-dsi-calibration-commands",
+
+	"qcom,mdss-dsi-dbv-bsd-90hz-12pulse-mode-command",
+	"qcom,mdss-dsi-dbv-bsd-90hz-3pulse-mode-command",
+	"qcom,mdss-dsi-dbv-90hz-16pulse-mode-command",
+	"qcom,mdss-dsi-dbv-90hz-4pulse-mode-command",
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -1956,6 +1961,11 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-qsync-on-commands-state",
 	"qcom,mdss-dsi-qsync-off-commands-state",
 	"qcom,mdss-dsi-calibration-commands-state",
+
+	"qcom,mdss-dsi-dbv-bsd-90hz-12pulse-mode-command-state",
+	"qcom,mdss-dsi-dbv-bsd-90hz-3pulse-mode-command-state",
+	"qcom,mdss-dsi-dbv-90hz-16pulse-mode-command-state",
+	"qcom,mdss-dsi-dbv-90hz-4pulse-mode-command-state",
 };
 
 int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
