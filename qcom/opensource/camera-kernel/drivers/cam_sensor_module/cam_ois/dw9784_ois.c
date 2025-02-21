@@ -308,6 +308,8 @@ int dw9784_download_open_camera(struct cam_ois_ctrl_t *o_ctrl)
 	}
 #endif
 /*no need config for fp5*/
+    /*****improve af settle time for fps project*******/
+    dw9784_update_af_settle_time(o_ctrl);
 
 	return ret;
 }
@@ -910,6 +912,14 @@ int dw9784_servo_off(struct cam_ois_ctrl_t *o_ctrl)
 	
 	return FUNC_FAIL;
 }
+/*****improve af settle time for fps project*******/
+void dw9784_update_af_settle_time(struct cam_ois_ctrl_t *o_ctrl){
+
+    printk("[dw9784_update_af_settle_time] update af settle time here!");
+    write_reg_16bit_value_16bit(o_ctrl,0x71E1, 0x2108); /* Set control mode */
+    os_mdelay(1);
+}
+
 
 int dw9784_checksum_all_chk(struct cam_ois_ctrl_t *o_ctrl)
 {
@@ -1582,6 +1592,8 @@ static ssize_t oisops_store(struct class *class, struct class_attribute *attr,
         ret=dw9784_fw_dump(o_ctrl);
     else if(cmd_buff[0]=='7')//fw force enable
         ret=dw9784_fw_force_enable(o_ctrl);
+    else if(cmd_buff[0]=='8')//fw info
+        dw9784_fw_info(o_ctrl);
     else
        printk("oisops_store:cmd is not support");
 	memset(data_buff,0,sizeof(data_buff));//0:successfull other:fail
