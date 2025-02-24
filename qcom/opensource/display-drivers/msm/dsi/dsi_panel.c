@@ -583,7 +583,9 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
 	int rc = 0;
+#if defined(CONFIG_ARCH_FPSPRING)
 	u8 payload[2] = { 0 };
+#endif
 	unsigned long mode_flags = 0;
 	struct mipi_dsi_device *dsi = NULL;
 
@@ -600,13 +602,18 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 
 	if (panel->bl_config.bl_inverted_dbv)
 		bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
-
+#if defined(CONFIG_ARCH_FPSPRING)
 	payload[1] = ((u16)(bl_lvl) & 0xff);
 	payload[0] = ((u16)(bl_lvl) >> 8);
 	//rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
 	rc = mipi_dsi_dcs_write(dsi, 0x51, payload, sizeof(payload));
 	if (rc < 0)
 		DSI_ERR("failed to update dcs backlight:%d\n", bl_lvl);
+#elif
+	rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
+	if (rc < 0)
+		DSI_ERR("failed to update dcs backlight:%d\n", bl_lvl);
+#endif
 
 	if (unlikely(panel->bl_config.lp_mode))
 		dsi->mode_flags = mode_flags;
