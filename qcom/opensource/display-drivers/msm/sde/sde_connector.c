@@ -156,6 +156,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	display->panel->bl_config.brightness = brightness;
 #if defined(CONFIG_ARCH_FPSPRING)
 	if (!strcmp(display->display_type, "primary")){
+		printk("zcy in sde brightness = %d\n", brightness);
 		if(brightness <= 0){
 			bl_lvl = 0;
 		} else if(brightness >= 1 && brightness <= 2048){
