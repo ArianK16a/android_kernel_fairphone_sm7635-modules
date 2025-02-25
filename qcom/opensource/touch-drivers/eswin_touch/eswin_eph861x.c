@@ -1628,7 +1628,7 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
             // disable heartbeat
             eph_heartbeat_stop(ephdata);
             eph_dev_enter_lp_mode(ephdata);
-
+            eph_clear_all_host_touch_slots(ephdata);
         } else {
 			ts_debug("suspend notification post commit\n");
 		}
