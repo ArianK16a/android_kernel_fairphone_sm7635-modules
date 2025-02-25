@@ -10,7 +10,7 @@
  */
 
 // uncomment to enable the dev_dbg prints to dmesg
-#define DEBUG
+//#define DEBUG
 // uncomment to test with input forced open
 //#define INPUT_DEVICE_ALWAYS_OPEN
 #include <linux/types.h>
