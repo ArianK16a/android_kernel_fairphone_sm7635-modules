@@ -10,7 +10,7 @@
  */
 
 // uncomment to enable the dev_dbg prints to dmesg
-#define DEBUG
+//#define DEBUG
 #include <linux/types.h>
 
 
