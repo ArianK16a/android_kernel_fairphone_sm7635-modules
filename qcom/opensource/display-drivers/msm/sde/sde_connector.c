@@ -124,6 +124,47 @@ static void sde_dimming_bl_notify(struct sde_connector *conn, struct dsi_backlig
 	msm_mode_object_event_notify(&conn->base.base, conn->base.dev, &event, (u8 *)&bl_info);
 }
 
+#if defined(CONFIG_ARCH_FPSPRING)
+static struct kobject *backlight_kobj = NULL;
+
+static bool disable_bl_mapping_flag = false;
+
+static unsigned int global_bl_lvl = 0;
+
+static unsigned int global_brightness = 0;
+
+static ssize_t disable_bl_mapping_show(struct kobject *kobj,
+				struct kobj_attribute *attr, char *buf)
+{
+
+	return sprintf(buf, "flag = %d, bl_lvl = %d, brightness = %d\n",
+			disable_bl_mapping_flag, global_bl_lvl, global_brightness);
+}
+
+static ssize_t disable_bl_mapping_store(struct kobject *kobj, struct kobj_attribute *attr,
+					const char *buf, size_t count)
+{
+	unsigned int input_value = 0;
+
+	if (kstrtouint(buf, 10, &input_value))
+		return -EINVAL;
+	if(input_value){
+		disable_bl_mapping_flag = true;
+	} else {
+		disable_bl_mapping_flag = false;
+	}
+
+	return count;
+}
+
+static struct kobj_attribute disable_bl_mapping_attrs[] =
+{
+	__ATTR(disable_bl_mapping, S_IRUGO|S_IWUSR|S_IWGRP, disable_bl_mapping_show,
+			disable_bl_mapping_store),
+
+};
+#endif
+
 static int sde_backlight_device_update_status(struct backlight_device *bd)
 {
 	int brightness;
@@ -155,8 +196,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 
 	display->panel->bl_config.brightness = brightness;
 #if defined(CONFIG_ARCH_FPSPRING)
-	if (!strcmp(display->display_type, "primary")){
-		printk("zcy in sde brightness = %d\n", brightness);
+	if (!strcmp(display->display_type, "primary") && !disable_bl_mapping_flag){
 		if(brightness <= 0){
 			bl_lvl = 0;
 		} else if(brightness >= 1 && brightness <= 2048){
@@ -176,6 +216,8 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
 				display->panel->bl_config.brightness_max_level);
 	}
+	global_bl_lvl = bl_lvl;
+	global_brightness = brightness;
 #elif
 
 	/* map UI brightness into driver backlight level with rounding */
@@ -1250,6 +1292,11 @@ void sde_connector_destroy(struct drm_connector *connector)
 		SDE_ERROR("invalid connector\n");
 		return;
 	}
+
+#if defined(CONFIG_ARCH_FPSPRING)
+	sysfs_remove_file(backlight_kobj, &disable_bl_mapping_attrs[0].attr);
+	kobject_put(backlight_kobj);
+#endif
 
 	c_conn = to_sde_connector(connector);
 
@@ -3526,6 +3573,18 @@ struct drm_connector *sde_connector_init(struct drm_device *dev,
 
 	INIT_DELAYED_WORK(&c_conn->status_work,
 			sde_connector_check_status_work);
+
+#if defined(CONFIG_ARCH_FPSPRING)
+	if(backlight_kobj == NULL){
+		backlight_kobj = kobject_create_and_add("driver_backlight", NULL);
+		if(backlight_kobj != NULL) {
+			rc = sysfs_create_file(backlight_kobj, &disable_bl_mapping_attrs[0].attr);
+			if(rc) {
+				DSI_ERR("failed to create file, rc=%d\n", rc);
+			}
+		}
+	}
+#endif
 
 	return &c_conn->base;
 
