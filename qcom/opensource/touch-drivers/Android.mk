@@ -54,6 +54,7 @@ ifeq ($(TOUCH_DLKM_ENABLE),  true)
        KBUILD_OPTIONS += MODNAME=touch_dlkm
        KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
        KBUILD_OPTIONS += $(TOUCH_SELECT)
+       KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS+=$(OUT_DIR)/obj/DLKM_OBJ/kernel_platform/msm-kernel/Module.symvers
 
        ###########################################################
 
