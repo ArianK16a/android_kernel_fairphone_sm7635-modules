@@ -10,6 +10,7 @@
 #include <linux/err.h>
 #include <linux/version.h>
 #include <linux/ktime.h>
+#include <emkit/emkit_info.h>
 
 #include "msm_drv.h"
 #include "sde_connector.h"
@@ -23,6 +24,8 @@
 #include "dsi_pwr.h"
 #include "sde_dbg.h"
 #include "dsi_parser.h"
+
+extern void SetModuleName(int, const char *, const char *);
 
 #define to_dsi_display(x) container_of(x, struct dsi_display, host)
 #define INT_BASE_10 10
@@ -46,6 +49,24 @@ static struct dsi_display_boot_param boot_displays[MAX_DSI_ACTIVE_DISPLAY] = {
 	{.boot_param = dsi_display_primary},
 	{.boot_param = dsi_display_secondary},
 };
+
+static int display_info(struct dsi_display *display)
+{
+	int rc=0;
+	int cnt = -EINVAL;
+	char *disp_info[] = {"NT37705","Novatek","FP6"};
+	char buf[256] = {0,};
+
+	if (!strcmp(display->panel->name, "nt37705 amoled command mode dsi panel")) {
+		cnt = snprintf(&buf[0], 256,"display_ic:%s\n", disp_info[0]);
+		cnt += snprintf(&buf[cnt], 256,"vendor:%s\n", disp_info[1]);
+		cnt += snprintf(&buf[cnt], 256,"project:%s\n", disp_info[2]);
+        SetModuleName(MODULE_DISPLAY, buf, __FUNCTION__);
+    } else {
+		rc = -EINVAL;
+	}
+	return rc;
+}
 
 static void dsi_display_panel_id_notification(struct dsi_display *display);
 
@@ -5874,6 +5895,12 @@ static int dsi_display_bind(struct device *dev,
 
 	DSI_INFO("Successfully bind display panel '%s %s'\n", display->name,
 			display->panel->te_using_watchdog_timer ? "as sim panel" : "");
+
+	rc = display_info(display);
+	if (rc) {
+		DSI_ERR("[%s] printing display information failed, rc=%d\n",display->name, rc);
+	}
+
 	display->drm_dev = drm;
 
 	display_for_each_ctrl(i, display) {
