@@ -41,6 +41,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/dmapool.h>
 #include <linux/pinctrl/consumer.h>
+#include <emkit/emkit_info.h>
 
 #include <linux/soc/qcom/panel_event_notifier.h>
 #include "eswin_eph861x_project_config.h"
@@ -51,6 +52,9 @@
 #include "eswin_eph861x_tlv_command.h"
 #include "eswin_eph861x_tlv_report.h"
 #include "eswin_eph861x.h"
+
+extern void SetModuleName(int, const char *, const char *);
+char emkit_buf[256] = {0,};
 
 /* device settings file format version expected*/
 #define EPH_DEVICE_SETTINGS_FORMAT       "<product>EPH8610</product>"
@@ -2035,6 +2039,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     int ret_val;
     int device_info_read_retry = 0;
     struct device *dev = &commsdevice->dev;
+    int cnt = -EINVAL;
 
     struct device_node *node = commsdevice->dev.of_node;
     dev_dbg(dev, "%s >>>\n", __func__);
@@ -2178,6 +2183,13 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
                  ephdata->ephdeviceinfo.application_version_major, ephdata->ephdeviceinfo.application_version_minor,
                  ephdata->ephdeviceinfo.bootloader_version, ephdata->ephdeviceinfo.protocol_version, ephdata->ephdeviceinfo.crc);
     }
+
+    cnt = snprintf(&emkit_buf[0], 256,"touch_ic:%s\n", "862X");
+    cnt += snprintf(&emkit_buf[cnt], 256,"fw_ver:%02x%02x%02x\n",
+                ephdata->ephdeviceinfo.application_version_major,ephdata->ephdeviceinfo.application_version_minor,ephdata->ephdeviceinfo.bootloader_version);
+    cnt += snprintf(&emkit_buf[cnt], 256,"vendor:%s\n", "ESWIN");
+    SetModuleName(MODULE_TOUCH, emkit_buf, __FUNCTION__);
+
 #if 1
     ret_val = eph_load_fw(&commsdevice->dev);
     if (ret_val) {
