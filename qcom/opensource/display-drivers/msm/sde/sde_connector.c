@@ -269,7 +269,14 @@ done:
 
 static int sde_backlight_device_get_brightness(struct backlight_device *bd)
 {
+#if defined(CONFIG_ARCH_FPSPRING)
+	int brightness;
+
+	brightness = bd->props.brightness;
+	return brightness;
+#elif
 	return 0;
+#endif
 }
 
 static const struct backlight_ops sde_backlight_device_ops = {
