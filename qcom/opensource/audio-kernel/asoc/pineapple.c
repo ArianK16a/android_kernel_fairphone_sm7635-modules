@@ -1707,6 +1707,12 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev,
 		return NULL;
 	}
 
+#ifdef CONFIG_SND_SOC_AW882XX
+		dev_err(dev, "%s: %d ", __func__, __LINE__);
+#else
+		dev_err(dev, "%s: %d ", __func__, __LINE__);
+#endif
+
 	if (!strcmp(match->data, "codec")) {
 		card = &snd_soc_card_pineapple_msm;
 
