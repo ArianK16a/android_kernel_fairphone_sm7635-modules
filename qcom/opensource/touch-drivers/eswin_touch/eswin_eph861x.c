@@ -224,7 +224,7 @@ static void eph_trigger_baseline_work(struct work_struct *work)
     struct eph_data *ephdata = container_of(work, struct eph_data, force_baseline_work);
     struct backlight_device *bd = ephdata->bl;
     int brightness = 0;
-
+    int retry = 10;
     if (ephdata->last_brightness == 0) {
         do {
             if (bd->ops && bd->ops->get_brightness)
@@ -235,7 +235,12 @@ static void eph_trigger_baseline_work(struct work_struct *work)
             if (brightness)
                 break;
 
-            dev_info(&ephdata->commsdevice->dev, "eph wait 5 msec\n");
+            if(retry > 0)
+                retry--;
+            else
+                break;
+
+            dev_info(&ephdata->commsdevice->dev, "eswin wait 5 msec, retry = %d, brightness = %d\n", retry, brightness);
             msleep(5);
 
         } while (brightness == 0);
@@ -1604,6 +1609,8 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		 struct panel_event_notification *notification, void *client_data)
 {
 	struct eph_data *ephdata = client_data;
+    struct backlight_device *bd = ephdata->bl;
+    int brightness = 0;
 
 	if (!notification) {
 		pr_err("Invalid notification\n");
@@ -1622,7 +1629,7 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 			eph_dev_enter_normal_mode(ephdata);
 	        // heartbeat work is needed
             eph_heartbeat_start(ephdata);
-
+            schedule_work(&ephdata->force_baseline_work);
         }
 		break;
 
@@ -1633,6 +1640,11 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
             eph_heartbeat_stop(ephdata);
             eph_dev_enter_lp_mode(ephdata);
             eph_clear_all_host_touch_slots(ephdata);
+            if (bd->ops && bd->ops->get_brightness)
+                brightness = bd->ops->get_brightness(bd);
+            else
+                brightness = bd->props.brightness;
+            ephdata->last_brightness = brightness;
         } else {
 			ts_debug("suspend notification post commit\n");
 		}
