@@ -1932,14 +1932,14 @@ static int wcd9378_hph_sequencer_enable(struct snd_soc_dapm_widget *w,
 					true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		/*TEAR DOWN HPH SEQUENCER*/
+		snd_soc_component_update_bits(component, WCD9378_PDE47_REQ_PS,
+				WCD9378_PDE47_REQ_PS_PDE47_REQ_PS_MASK, 0x03);
 		regmap_write(wcd9378->regmap, WCD9378_FU42_MUTE_CH1_CN, 0x01);
 		regmap_write(wcd9378->regmap, WCD9378_FU42_MUTE_CH2_CN, 0x01);
 
 		swr_write(swr_dev, swr_dev->dev_num, 0x004c, &commit_val);
 
-		/*TEAR DOWN HPH SEQUENCER*/
-		snd_soc_component_update_bits(component, WCD9378_PDE47_REQ_PS,
-				WCD9378_PDE47_REQ_PS_PDE47_REQ_PS_MASK, 0x03);
 
 		if (!wcd9378->comp1_enable || !wcd9378->comp2_enable)
 			/*PA delay is 24250us*/
