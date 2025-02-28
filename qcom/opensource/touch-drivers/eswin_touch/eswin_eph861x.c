@@ -1376,6 +1376,326 @@ static ssize_t eph_devattr_finger_print_enable(struct device *dev,
     return ret_val == 0 ? count : ret_val;
 }
 
+// charger mode
+static int eswin_ts_enable_charger_mode(struct device *dev, int mode)
+{
+    int ret = 0;
+    uint8_t cmd[] = {0x08, 0x05, 0x00, 0x0C, 0x00, 0x02, 0x00, 0x01};
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+    if(mode == 0)
+    {
+        /* disable charger mode. */
+        cmd[7] = 0x0;
+    }
+
+    mutex_lock(&ephdata->comms_mutex);
+    ret = eph_write_control_config(ephdata, sizeof(cmd), cmd);
+    if (ret)
+    {
+        dev_err(dev, "failed to set charger mode\n");
+    }
+    msleep(10);
+    dev_err(dev, "Success to %s charger mode\n", mode ? "Enable" : "Disable");
+    mutex_unlock(&ephdata->comms_mutex);
+
+    return ret;
+}
+
+static ssize_t eswin_ts_charger_mode_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+    dev_info(dev, "charger mode state = %d.\n", ephdata->charger_mode);
+    return scnprintf(buf, PAGE_SIZE, "%d\n", ephdata->charger_mode);
+}
+
+static ssize_t eswin_ts_charger_mode_store(struct device *dev,
+			struct device_attribute *attr, const char *buf, size_t size)
+{
+    int ret = 0;
+    unsigned long value = 0;
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+	ret = kstrtoul(buf, 0, &value);
+	if (ret < 0) {
+		dev_err(dev, "charger_mode: Failed to convert value\n");
+		return -EINVAL;
+	}
+
+	switch (value) {
+		case 0x0:
+			dev_info(dev, "charger mode try disable\n");
+			break;
+		case 0x1:
+			dev_info(dev, "charger mode try enable\n");
+			break;
+		default:
+			dev_info(dev, "unsupport charger mode type, value = %lu\n", value);
+			return -EINVAL;
+	}
+
+	if (ephdata->charger_mode == value) {
+		dev_info(dev, "The value = %d is same, so not to write", ephdata->charger_mode);
+		goto exit;
+	}
+
+	ret = eswin_ts_enable_charger_mode(dev, value);
+	if (ret < 0) {
+		dev_err(dev, "failed to send charger mode cmd");
+		goto exit;
+	}
+
+	ephdata->charger_mode = value;
+	msleep(20);
+
+	dev_info(dev, "Success to %s charger_mode", ephdata->charger_mode ? "Enable" : "Disable");
+exit:
+	return size;
+}
+
+//headphone line insert
+static int eswin_ts_enable_headphone_mode(struct device *dev, int mode)
+{
+    int ret = 0;
+    uint8_t cmd[] = {0x08, 0x05, 0x00, 0x0C, 0x00, 0x04, 0x00, 0x01};
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+    if(mode == 0)
+    {
+        /* disable mode. */
+        cmd[7] = 0x0;
+    }
+
+    mutex_lock(&ephdata->comms_mutex);
+    ret = eph_write_control_config(ephdata, sizeof(cmd), cmd);
+    if (ret) {
+        dev_err(dev, "failed to set headphone line insert\n");
+    }
+    msleep(10);
+    dev_info(dev, "Success to %s headphone line insert\n", mode ? "Enable" : "Disable");
+    mutex_unlock(&ephdata->comms_mutex);
+
+    return ret;
+}
+
+static ssize_t eswin_ts_headphone_mode_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+	dev_info(dev, "headphone mode state = %d.\n", ephdata->headphone_mode);
+	return scnprintf(buf, PAGE_SIZE, "%d\n", ephdata->headphone_mode);
+}
+
+static ssize_t eswin_ts_headphone_mode_store(struct device *dev,
+			struct device_attribute *attr, const char *buf, size_t size)
+{
+	int ret = 0;
+	unsigned long value = 0;
+        struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+	ret = kstrtoul(buf, 0, &value);
+	if (ret < 0) {
+		dev_err(dev, "headphone_mode: Failed to convert value\n");
+		return -EINVAL;
+	}
+
+	switch (value) {
+		case 0x0:
+			dev_info(dev, "headphone mode try disable\n");
+			break;
+		case 0x1:
+			dev_info(dev, "headphone mode try enable\n");
+			break;
+		default:
+			dev_info(dev, "unsupport headphone mode type, value = %lu\n", value);
+			return -EINVAL;
+	}
+
+	if (ephdata->headphone_mode == value) {
+		dev_info(dev, "The value = %d is same, so not to write", ephdata->headphone_mode);
+		goto exit;
+	}
+
+	ret = eswin_ts_enable_headphone_mode(dev, value);
+	if (ret < 0) {
+		dev_err(dev, "failed to send headphone mode cmd");
+		goto exit;
+	}
+
+	ephdata->headphone_mode = value;
+	msleep(20);
+
+	dev_info(dev, "Success to %s headphone mode", ephdata->headphone_mode ? "Enable" : "Disable");
+exit:
+	return size;
+}
+
+//glove mode
+static int eswin_ts_enable_glove_mode(struct device *dev, int mode)
+{
+    int ret = 0;
+    uint8_t cmd[] = {0x08, 0x05, 0x00, 0x0C, 0x00, 0x08, 0x00, 0x01};
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+    if(mode == 0)
+    {
+        /* disable mode. */
+        cmd[7] = 0x0;
+    }
+
+    mutex_lock(&ephdata->comms_mutex);
+    ret = eph_write_control_config(ephdata, sizeof(cmd), cmd);
+    if (ret) {
+        dev_err(dev, "failed to set glove mode\n");
+    }
+    msleep(10);
+    dev_info(dev, "Success to %s glove mode\n", mode ? "Enable" : "Disable");
+    mutex_unlock(&ephdata->comms_mutex);
+
+    return ret;
+}
+
+static ssize_t eswin_ts_glove_mode_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+	dev_info(dev, "glove mode state = %d.\n", ephdata->glove_mode);
+	return scnprintf(buf, PAGE_SIZE, "%d\n", ephdata->glove_mode);
+}
+
+static ssize_t eswin_ts_glove_mode_store(struct device *dev,
+			struct device_attribute *attr, const char *buf, size_t size)
+{
+	int ret = 0;
+	unsigned long value = 0;
+        struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+	ret = kstrtoul(buf, 0, &value);
+	if (ret < 0) {
+		dev_err(dev, "glove_mode: Failed to convert value\n");
+		return -EINVAL;
+	}
+
+	switch (value) {
+		case 0x0:
+			dev_info(dev, "glove mode try disable\n");
+			break;
+		case 0x1:
+			dev_info(dev, "glove mode try enable\n");
+			break;
+		default:
+			dev_info(dev, "unsupport glove mode type, value = %lu\n", value);
+			return -EINVAL;
+	}
+
+	if (ephdata->glove_mode == value) {
+		dev_info(dev, "The value = %d is same, so not to write", ephdata->glove_mode);
+		goto exit;
+	}
+
+	ret = eswin_ts_enable_glove_mode(dev, value);
+	if (ret < 0) {
+		dev_err(dev, "failed to send glove mode cmd");
+		goto exit;
+	}
+
+	ephdata->glove_mode = value;
+	msleep(20);
+
+	dev_info(dev, "Success to %s glove mode", ephdata->glove_mode ? "Enable" : "Disable");
+exit:
+	return size;
+}
+
+//edge_suppresion
+static int eswin_ts_enable_edge_suppresion(struct device *dev, int mode)
+{
+    int ret = 0;
+    uint8_t cmd[] = {0x08, 0x05, 0x00, 0x0C, 0x00, 0x09, 0x00, 0x00};
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+    switch (mode) {
+    case 0:
+	cmd[7] = 0; // 0
+	break;
+    case 1:
+	cmd[7] = 1; // 90
+	break;
+    case 2:
+	cmd[7] = 2; // 180
+	break;
+    case 3:
+	cmd[7] = 3; // 270
+	break;
+    default:
+	dev_info(dev, "unsupport edge_suppresion type, mode = %d\n", mode);
+	return -1;
+    }
+
+    mutex_lock(&ephdata->comms_mutex);
+    ret = eph_write_control_config(ephdata, sizeof(cmd), cmd);
+    if (ret)
+    {
+        dev_err(dev, "failed to set edge_suppresion\n");
+    }
+    msleep(10);
+    dev_info(dev, "Success to %s edge_suppresion\n", mode ? "Enable" : "Disable");
+    mutex_unlock(&ephdata->comms_mutex);
+
+    return ret;
+}
+
+static ssize_t eswin_ts_edge_suppresion_show(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+	dev_info(dev, "edge_suppresion state = %d.\n", ephdata->edge_suppresion);
+	return scnprintf(buf, PAGE_SIZE, "%d\n", ephdata->edge_suppresion);
+}
+
+static ssize_t eswin_ts_edge_suppresion_store(struct device *dev,
+			struct device_attribute *attr, const char *buf, size_t size)
+{
+	int ret = 0;
+	unsigned long value = 0;
+    struct eph_data *ephdata = (struct eph_data*)dev_get_drvdata(dev);
+
+	ret = kstrtoul(buf, 0, &value);
+	if (ret < 0) {
+		dev_err(dev, "edge_suppresion: Failed to convert value\n");
+		mutex_unlock(&ephdata->comms_mutex);
+		return -EINVAL;
+	}
+
+	if (value > 4 || value < 0) {
+	    dev_info(dev, "unsupport edge_suppresion type, value = %lu\n", value);
+	    return -EINVAL;
+	}
+
+	if (ephdata->edge_suppresion == value) {
+		dev_info(dev, "The value = %d is same, so not to write", ephdata->edge_suppresion);
+		goto exit;
+	}
+
+	ret = eswin_ts_enable_edge_suppresion(dev, value);
+	if (ret < 0) {
+		dev_err(dev, "failed to send edge_suppresion cmd");
+		goto exit;
+	}
+
+	ephdata->edge_suppresion = value;
+	msleep(20);
+
+	dev_info(dev, "Success to %s edge_suppresion", ephdata->edge_suppresion ? "Enable" : "Disable");
+exit:
+	return size;
+}
+
 /* .attr.name, .attr.mode, .show, .store  */
 static DEVICE_ATTR(update_fw, S_IWUSR, NULL, eph_devattr_update_fw_store);
 /* S_IRUGO - read-only attributes  */
@@ -1389,6 +1709,14 @@ static DEVICE_ATTR(read_device_report, S_IRUGO, eph_devattr_device_report_read, 
 static DEVICE_ATTR(reset_device, S_IRUGO, eph_devattr_reset_device, NULL);
 static DEVICE_ATTR(gesture_wakeup, (S_IWUSR|S_IRUGO), eph_devattr_gesture_wakeup_read, eph_devattr_gesture_wakeup_store);
 static DEVICE_ATTR(finger_print_enable, S_IWUSR, NULL, eph_devattr_finger_print_enable);
+static DEVICE_ATTR(charger_mode, (S_IRUGO | S_IWUSR | S_IWGRP),
+	eswin_ts_charger_mode_show, eswin_ts_charger_mode_store);
+static DEVICE_ATTR(headphone_mode, (S_IRUGO | S_IWUSR | S_IWGRP),
+	eswin_ts_headphone_mode_show, eswin_ts_headphone_mode_store);
+static DEVICE_ATTR(glove_mode, (S_IRUGO | S_IWUSR | S_IWGRP),
+	eswin_ts_glove_mode_show, eswin_ts_glove_mode_store);
+static DEVICE_ATTR(edge_suppresion, (S_IRUGO | S_IWUSR | S_IWGRP),
+	eswin_ts_edge_suppresion_show, eswin_ts_edge_suppresion_store);
 
 static struct attribute *eph_fw_attrs[] =
 {
@@ -1425,6 +1753,10 @@ static struct attribute *eph_attrs[] =
     /* FOD enable switch */
     &dev_attr_finger_print_enable.attr,
 
+    &dev_attr_charger_mode.attr,
+    &dev_attr_headphone_mode.attr,
+    &dev_attr_glove_mode.attr,
+    &dev_attr_edge_suppresion.attr,
     NULL
 };
 
