@@ -230,6 +230,10 @@ struct eph_data
 
     bool gesture_wakeup_enable;
     u8 gesture_mode;
+    u8 charger_mode;
+    u8 headphone_mode;
+    u8 glove_mode;
+    u8 edge_suppresion;
 
     /* low power mode gesture */
     u8 lp;
