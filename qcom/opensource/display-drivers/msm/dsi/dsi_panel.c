@@ -579,13 +579,80 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 	return 0;
 }
 
+#if defined(CONFIG_ARCH_FPSPRING)
+int current_bl = 0;
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
 	int rc = 0;
-#if defined(CONFIG_ARCH_FPSPRING)
+	int cmd_set = 0;
 	u8 payload[2] = { 0 };
-#endif
+	unsigned long mode_flags = 0;
+	struct mipi_dsi_device *dsi = NULL;
+	struct dsi_mode_info *timing = &panel->cur_mode->timing;
+	if (!panel || (bl_lvl > 0xffff)) {
+		DSI_ERR("invalid params\n");
+		return -EINVAL;
+	}
+
+	dsi = &panel->mipi_device;
+	if (unlikely(panel->bl_config.lp_mode)) {
+		mode_flags = dsi->mode_flags;
+		dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+	}
+
+	// if (panel->bl_config.bl_inverted_dbv)
+	// 	bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
+
+	payload[1] = ((u16)(bl_lvl) & 0xff);
+	payload[0] = ((u16)(bl_lvl) >> 8);
+
+    if (panel->cur_mode) {
+        if (timing->refresh_rate != 90) {
+            if ((bl_lvl <= 1290) && ((current_bl > 1290) || (current_bl == 0))) {
+                DSI_ERR("beside 90hz, DBV <= 1290, %s\n", __func__);
+                cmd_set = DSI_CMD_SET_DBV_BSD_90HZ_12PULSE_MODE;
+            } else if ((bl_lvl >= 1291) && ((current_bl < 1291)|| (current_bl == 0))) {
+                DSI_ERR("beside 90hz, DBV > 1290, %s\n", __func__);
+                cmd_set = DSI_CMD_SET_DBV_BSD_90HZ_3PULSE_MODE;
+            }
+        } else {
+            if ((bl_lvl <= 1290) && ((current_bl > 1290) || (current_bl == 0))) {
+                DSI_ERR("90hz, DBV <= 1290, %s\n", __func__);
+                cmd_set = DSI_CMD_SET_DBV_90HZ_16PULSE_MODE;
+            } else if ((bl_lvl >= 1291) && ((current_bl < 1291) || (current_bl == 0))) {
+                DSI_ERR("90hz, DBV > 1290, %s\n", __func__);
+                cmd_set = DSI_CMD_SET_DBV_90HZ_4PULSE_MODE;
+            }
+        }
+	udelay(5800);
+        rc = dsi_panel_tx_cmd_set(panel, cmd_set);
+        if (rc) {
+            DSI_ERR("[%s] failed to send cmd_set %d, rc = %d\n", panel->name, cmd_set, rc);
+        }
+    } else {
+        DSI_ERR(" cur_mode is NULL, cannot get refresh rate %s\n", __func__);
+    }
+
+	rc = mipi_dsi_dcs_write(dsi, 0x51, payload, sizeof(payload));
+	if (rc < 0)
+		DSI_ERR("failed to update dcs backlight:%d\n", bl_lvl);
+
+	current_bl = bl_lvl;
+
+	if (unlikely(panel->bl_config.lp_mode))
+		dsi->mode_flags = mode_flags;
+
+	return rc;
+}
+
+#elif
+
+static int dsi_panel_update_backlight(struct dsi_panel *panel,
+	u32 bl_lvl)
+{
+	int rc = 0;
+
 	unsigned long mode_flags = 0;
 	struct mipi_dsi_device *dsi = NULL;
 
@@ -602,24 +669,17 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 
 	if (panel->bl_config.bl_inverted_dbv)
 		bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
-#if defined(CONFIG_ARCH_FPSPRING)
-	payload[1] = ((u16)(bl_lvl) & 0xff);
-	payload[0] = ((u16)(bl_lvl) >> 8);
-	//rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
-	rc = mipi_dsi_dcs_write(dsi, 0x51, payload, sizeof(payload));
-	if (rc < 0)
-		DSI_ERR("failed to update dcs backlight:%d\n", bl_lvl);
-#elif
+
 	rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
 	if (rc < 0)
 		DSI_ERR("failed to update dcs backlight:%d\n", bl_lvl);
-#endif
 
 	if (unlikely(panel->bl_config.lp_mode))
 		dsi->mode_flags = mode_flags;
 
 	return rc;
 }
+#endif
 
 static int dsi_panel_update_pwm_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
