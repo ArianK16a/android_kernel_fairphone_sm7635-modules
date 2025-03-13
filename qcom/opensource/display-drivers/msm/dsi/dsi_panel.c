@@ -131,6 +131,7 @@ static int dsi_panel_gpio_request(struct dsi_panel *panel)
 		}
 	}
 
+#if defined(CONFIG_ARCH_FPSPRING)
 	if (gpio_is_valid(r_config->disp_1v2_off_gpio)) {
 		rc = gpio_request(r_config->disp_1v2_off_gpio, "disp_1v2_off_gpio");
 		if (rc) {
@@ -138,6 +139,7 @@ static int dsi_panel_gpio_request(struct dsi_panel *panel)
 			goto error_release_reset;
 		}
 	}
+#endif
 
 	if (gpio_is_valid(panel->bl_config.en_gpio)) {
 		rc = gpio_request(panel->bl_config.en_gpio, "bklt_en_gpio");
@@ -172,8 +174,10 @@ error_release_mode_sel:
 error_release_disp_en:
 	if (gpio_is_valid(r_config->disp_en_gpio))
 		gpio_free(r_config->disp_en_gpio);
+#if defined(CONFIG_ARCH_FPSPRING)
 	if (gpio_is_valid(r_config->disp_1v2_off_gpio))
 		gpio_free(r_config->disp_1v2_off_gpio);
+#endif
 error_release_reset:
 	if (gpio_is_valid(r_config->reset_gpio))
 		gpio_free(r_config->reset_gpio);
@@ -192,8 +196,10 @@ static int dsi_panel_gpio_release(struct dsi_panel *panel)
 	if (gpio_is_valid(r_config->disp_en_gpio))
 		gpio_free(r_config->disp_en_gpio);
 
+#if defined(CONFIG_ARCH_FPSPRING)
 	if (gpio_is_valid(r_config->disp_1v2_off_gpio))
 		gpio_free(r_config->disp_1v2_off_gpio);
+#endif
 
 	if (gpio_is_valid(panel->bl_config.en_gpio))
 		gpio_free(panel->bl_config.en_gpio);
@@ -283,14 +289,6 @@ static int dsi_panel_reset(struct dsi_panel *panel)
 		}
 	}
 
-	if (gpio_is_valid(panel->reset_config.disp_1v2_off_gpio)) {
-		rc = gpio_direction_output(panel->reset_config.disp_1v2_off_gpio, 1);
-		if (rc) {
-			DSI_ERR("unable to set dir for disp_1v2_off_gpio rc=%d\n", rc);
-			goto exit;
-		}
-	}
-
 	if (r_config->count) {
 		rc = gpio_direction_output(r_config->reset_gpio,
 			r_config->sequence[0].level);
@@ -371,6 +369,73 @@ static int dsi_panel_set_pinctrl_state(struct dsi_panel *panel, bool enable)
 	return rc;
 }
 
+#if defined(CONFIG_ARCH_FPSPRING)
+static int dsi_panel_power_on_early(struct dsi_panel *panel)
+{
+	int rc = 0;
+
+	if (gpio_is_valid(panel->reset_config.disp_1v2_off_gpio)) {
+		rc = gpio_direction_output(panel->reset_config.disp_1v2_off_gpio, 1);
+		if (rc) {
+			DSI_ERR("unable to set dir for disp_1v2_off_gpio rc=%d\n", rc);
+			goto exit;
+		}
+	}
+
+	rc = dsi_pwr_enable_regulator(&panel->power_info, true);
+	if (rc) {
+		DSI_ERR("[%s] failed to enable vregs, rc=%d\n",
+				panel->name, rc);
+		goto exit;
+	}
+
+	rc = dsi_panel_set_pinctrl_state(panel, true);
+	if (rc) {
+		DSI_ERR("[%s] failed to set pinctrl, rc=%d\n", panel->name, rc);
+		goto error_disable_vregs;
+	}
+	goto exit;
+
+error_disable_vregs:
+	if (gpio_is_valid(panel->reset_config.disp_1v2_off_gpio))
+		gpio_set_value(panel->reset_config.disp_1v2_off_gpio, 0);
+	(void)dsi_pwr_enable_regulator(&panel->power_info, false);
+
+exit:
+	return rc;
+}
+
+static int dsi_panel_power_on(struct dsi_panel *panel)
+{
+	int rc = 0;
+
+	rc = dsi_panel_reset(panel);
+	if (rc) {
+		DSI_ERR("[%s] failed to reset panel, rc=%d\n", panel->name, rc);
+		goto error_disable_gpio;
+	}
+
+	goto exit;
+
+error_disable_gpio:
+	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
+		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
+
+	if (gpio_is_valid(panel->reset_config.disp_1v2_off_gpio))
+		gpio_set_value(panel->reset_config.disp_1v2_off_gpio, 0);
+
+	if (gpio_is_valid(panel->bl_config.en_gpio))
+		gpio_set_value(panel->bl_config.en_gpio, 0);
+
+	(void)dsi_panel_set_pinctrl_state(panel, false);
+
+	(void)dsi_pwr_enable_regulator(&panel->power_info, false);
+
+exit:
+	return rc;
+}
+
+#elif
 
 static int dsi_panel_power_on(struct dsi_panel *panel)
 {
@@ -401,9 +466,6 @@ error_disable_gpio:
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
 
-	if (gpio_is_valid(panel->reset_config.disp_1v2_off_gpio))
-		gpio_set_value(panel->reset_config.disp_1v2_off_gpio, 0);
-
 	if (gpio_is_valid(panel->bl_config.en_gpio))
 		gpio_set_value(panel->bl_config.en_gpio, 0);
 
@@ -415,16 +477,18 @@ error_disable_vregs:
 exit:
 	return rc;
 }
+#endif
 
 static int dsi_panel_power_off(struct dsi_panel *panel)
 {
 	int rc = 0;
 
+#if defined(CONFIG_ARCH_FPSPRING)
+	usleep_range(5*1000, 5*1100);
+#endif
+
 	if (gpio_is_valid(panel->reset_config.disp_en_gpio))
 		gpio_set_value(panel->reset_config.disp_en_gpio, 0);
-
-	if (gpio_is_valid(panel->reset_config.disp_1v2_off_gpio))
-		gpio_set_value(panel->reset_config.disp_1v2_off_gpio, 0);
 
 	if (gpio_is_valid(panel->reset_config.reset_gpio) &&
 					!panel->reset_gpio_always_on)
@@ -450,6 +514,11 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (rc)
 		DSI_ERR("[%s] failed to enable vregs, rc=%d\n",
 				panel->name, rc);
+
+#if defined(CONFIG_ARCH_FPSPRING)
+	if (gpio_is_valid(panel->reset_config.disp_1v2_off_gpio))
+		gpio_set_value(panel->reset_config.disp_1v2_off_gpio, 0);
+#endif
 
 	return rc;
 }
@@ -2542,6 +2611,7 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 		}
 	}
 
+#if defined(CONFIG_ARCH_FPSPRING)
 	panel->reset_config.disp_1v2_off_gpio =
 			utils->get_named_gpio(utils->data,
 				"qcom,platform-dvdd-off-gpio", 0);
@@ -2549,6 +2619,7 @@ static int dsi_panel_parse_gpios(struct dsi_panel *panel)
 		DSI_DEBUG("[%s] platform-1v2-off-gpio is not set, rc=%d\n",
 				panel->name, rc);
 	}
+#endif
 
 	panel->reset_config.lcd_mode_sel_gpio = utils->get_named_gpio(
 		utils->data, mode_set_gpio_name, 0);
@@ -4652,6 +4723,33 @@ exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
+
+#if defined(CONFIG_ARCH_FPSPRING)
+int dsi_panel_prepare_early(struct dsi_panel *panel)
+{
+	int rc = 0;
+
+	if (!panel) {
+		DSI_ERR("invalid params\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&panel->panel_lock);
+
+	if (panel->lp11_init) {
+		rc = dsi_panel_power_on_early(panel);
+		if (rc) {
+			DSI_ERR("[%s] panel power on eraly failed, rc=%d\n",
+			       panel->name, rc);
+			goto error;
+		}
+	}
+
+error:
+	mutex_unlock(&panel->panel_lock);
+	return rc;
+}
+#endif
 
 int dsi_panel_prepare(struct dsi_panel *panel)
 {
