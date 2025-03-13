@@ -8454,7 +8454,18 @@ int dsi_display_prepare(struct dsi_display *display)
 				display->name, rc);
 			goto error_ctrl_clk_off;
 		}
-
+#if defined(CONFIG_ARCH_FPSPRING)
+		if (!is_skip_op_required(display)) {
+			if (!display->poms_pending) {
+				rc = dsi_panel_prepare_early(display->panel);
+				if (rc) {
+					DSI_ERR("[%s] panel prepare early failed, rc=%d\n",
+							display->name, rc);
+					goto error_ctrl_clk_off;
+				}
+			}
+		}
+#endif
 		rc = dsi_display_phy_enable(display);
 		if (rc) {
 			DSI_ERR("[%s] failed to enable DSI PHY, rc=%d\n",
