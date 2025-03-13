@@ -165,7 +165,9 @@ struct dsi_panel_reset_config {
 	struct dsi_reset_seq *sequence;
 	u32 count;
 
+#if defined(CONFIG_ARCH_FPSPRING)
 	int disp_1v2_off_gpio;
+#endif
 	int reset_gpio;
 	int disp_en_gpio;
 	int lcd_mode_sel_gpio;
@@ -351,6 +353,10 @@ int dsi_panel_set_lp1(struct dsi_panel *panel);
 int dsi_panel_set_lp2(struct dsi_panel *panel);
 
 int dsi_panel_set_nolp(struct dsi_panel *panel);
+
+#if defined(CONFIG_ARCH_FPSPRING)
+int dsi_panel_prepare_early(struct dsi_panel *panel);
+#endif
 
 int dsi_panel_prepare(struct dsi_panel *panel);
 
