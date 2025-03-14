@@ -672,21 +672,23 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	payload[1] = ((u16)(bl_lvl) & 0xff);
 	payload[0] = ((u16)(bl_lvl) >> 8);
 
+	DSI_INFO("refresh_rate=%d, bl_lvl=%d, current_bl=%d, %s\n",
+		timing->refresh_rate, bl_lvl, current_bl, __func__);
     if (panel->cur_mode) {
         if (timing->refresh_rate != 90) {
             if ((bl_lvl <= 1290) && ((current_bl > 1290) || (current_bl == 0))) {
-                DSI_ERR("beside 90hz, DBV <= 1290, %s\n", __func__);
+                DSI_INFO("beside 90hz, DBV <= 1290, %s\n", __func__);
                 cmd_set = DSI_CMD_SET_DBV_BSD_90HZ_12PULSE_MODE;
             } else if ((bl_lvl >= 1291) && ((current_bl < 1291)|| (current_bl == 0))) {
-                DSI_ERR("beside 90hz, DBV > 1290, %s\n", __func__);
+                DSI_INFO("beside 90hz, DBV > 1290, %s\n", __func__);
                 cmd_set = DSI_CMD_SET_DBV_BSD_90HZ_3PULSE_MODE;
             }
         } else {
             if ((bl_lvl <= 1290) && ((current_bl > 1290) || (current_bl == 0))) {
-                DSI_ERR("90hz, DBV <= 1290, %s\n", __func__);
+                DSI_INFO("90hz, DBV <= 1290, %s\n", __func__);
                 cmd_set = DSI_CMD_SET_DBV_90HZ_16PULSE_MODE;
             } else if ((bl_lvl >= 1291) && ((current_bl < 1291) || (current_bl == 0))) {
-                DSI_ERR("90hz, DBV > 1290, %s\n", __func__);
+                DSI_INFO("90hz, DBV > 1290, %s\n", __func__);
                 cmd_set = DSI_CMD_SET_DBV_90HZ_4PULSE_MODE;
             }
         }
@@ -2058,11 +2060,12 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-post-mode-switch-on-command",
 	"qcom,mdss-dsi-qsync-on-commands",
 	"qcom,mdss-dsi-qsync-off-commands",
-
+#if defined(CONFIG_ARCH_FPSPRING)
 	"qcom,mdss-dsi-dbv-bsd-90hz-12pulse-mode-command",
 	"qcom,mdss-dsi-dbv-bsd-90hz-3pulse-mode-command",
 	"qcom,mdss-dsi-dbv-90hz-16pulse-mode-command",
 	"qcom,mdss-dsi-dbv-90hz-4pulse-mode-command",
+#endif
 };
 
 const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
@@ -2091,11 +2094,12 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-post-mode-switch-on-command-state",
 	"qcom,mdss-dsi-qsync-on-commands-state",
 	"qcom,mdss-dsi-qsync-off-commands-state",
-
+#if defined(CONFIG_ARCH_FPSPRING)
 	"qcom,mdss-dsi-dbv-bsd-90hz-12pulse-mode-command-state",
 	"qcom,mdss-dsi-dbv-bsd-90hz-3pulse-mode-command-state",
 	"qcom,mdss-dsi-dbv-90hz-16pulse-mode-command-state",
 	"qcom,mdss-dsi-dbv-90hz-4pulse-mode-command-state",
+#endif
 };
 
 int dsi_panel_get_cmd_pkt_count(const char *data, u32 length, u32 *cnt)
