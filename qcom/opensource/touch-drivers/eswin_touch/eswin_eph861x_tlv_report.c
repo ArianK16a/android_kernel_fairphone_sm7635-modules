@@ -353,9 +353,23 @@ static void eph_recv_touch_report(struct eph_data *ephdata, u8 *message)
 
     if (RELEASE_TYPE == touch_type)
     {
-
+        // report the last touch spot
+        input_mt_report_slot_state(ephdata->inputdev, touch_tool_type, 1);
+        if (ephplatform->panel_invert_x)
+            input_report_abs(ephdata->inputdev, ABS_MT_POSITION_X, (ephplatform->panel_max_x - position_x));
+        else
+            input_report_abs(ephdata->inputdev, ABS_MT_POSITION_X, (position_x));
+        if (ephplatform->panel_invert_y)
+            input_report_abs(ephdata->inputdev, ABS_MT_POSITION_Y, (ephplatform->panel_max_y - position_y));
+        else
+            input_report_abs(ephdata->inputdev, ABS_MT_POSITION_Y, position_y);
+        input_report_abs(ephdata->inputdev, ABS_MT_TOUCH_MAJOR, touch_major_axis);
+        input_report_abs(ephdata->inputdev, ABS_MT_TOUCH_MINOR, touch_minor_axis);
+        input_report_abs(ephdata->inputdev, ABS_MT_PRESSURE, 1);
+        input_sync(ephdata->inputdev);
         /* close out slot */
         /* touch tool type on a release will always show MT_TOOL_FINGER - Optional information - Doesnt matter the touch_tool_type for a release */
+        input_mt_slot(ephdata->inputdev, touch_id_slot);
         input_mt_report_slot_state(ephdata->inputdev, touch_tool_type, is_active);
         input_report_abs(ephdata->inputdev, ABS_MT_PRESSURE, touch_pressure);
 #if 0
