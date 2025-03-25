@@ -1300,6 +1300,172 @@ static struct snd_soc_dai_link msm_mi2s_dai_links[] = {
 	},
 };
 
+//awinic amp PA2 for hac
+SND_SOC_DAILINK_DEFS(sen_mi2s_rx_hac,
+	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw882xx_smartpa_0", "aw882xx-aif-0"),
+			COMP_CODEC("aw882xx_smartpa_1", "aw882xx-aif-1"),
+			COMP_CODEC("aw882xx_smartpa_2", "aw882xx-aif-2")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
+
+SND_SOC_DAILINK_DEFS(sen_mi2s_tx_hac,
+	DAILINK_COMP_ARRAY(COMP_CPU("snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("aw882xx_smartpa_0", "aw882xx-aif-0"),
+			COMP_CODEC("aw882xx_smartpa_1", "aw882xx-aif-1"),
+			COMP_CODEC("aw882xx_smartpa_2", "aw882xx-aif-2")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("snd-soc-dummy")));
+
+static struct snd_soc_dai_link msm_mi2s_dai_links_hac[] = {
+	{
+		.name = LPASS_BE_PRI_MI2S_RX,
+		.stream_name = LPASS_BE_PRI_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(pri_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_PRI_MI2S_TX,
+		.stream_name = LPASS_BE_PRI_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(pri_mi2s_tx),
+	},
+	{
+		.name = LPASS_BE_SEC_MI2S_RX,
+		.stream_name = LPASS_BE_SEC_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(sec_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_SEC_MI2S_TX,
+		.stream_name = LPASS_BE_SEC_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(sec_mi2s_tx),
+	},
+	{
+		.name = LPASS_BE_TERT_MI2S_RX,
+		.stream_name = LPASS_BE_TERT_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(tert_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_TERT_MI2S_TX,
+		.stream_name = LPASS_BE_TERT_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(tert_mi2s_tx),
+	},
+	{
+		.name = LPASS_BE_QUAT_MI2S_RX,
+		.stream_name = LPASS_BE_QUAT_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(quat_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_QUAT_MI2S_TX,
+		.stream_name = LPASS_BE_QUAT_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(quat_mi2s_tx),
+	},
+	{
+		.name = LPASS_BE_QUIN_MI2S_RX,
+		.stream_name = LPASS_BE_QUIN_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(quin_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_QUIN_MI2S_TX,
+		.stream_name = LPASS_BE_QUIN_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(quin_mi2s_tx),
+	},
+	{
+		.name = LPASS_BE_SEN_MI2S_RX,
+		.stream_name = LPASS_BE_SEN_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(sen_mi2s_rx_hac),
+	},
+	{
+		.name = LPASS_BE_SEN_MI2S_TX,
+		.stream_name = LPASS_BE_SEN_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(sen_mi2s_tx_hac),
+	},
+	{
+		.name = LPASS_BE_SEP_MI2S_RX,
+		.stream_name = LPASS_BE_SEP_MI2S_RX,
+		.playback_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(sep_mi2s_rx),
+	},
+	{
+		.name = LPASS_BE_SEP_MI2S_TX,
+		.stream_name = LPASS_BE_SEP_MI2S_TX,
+		.capture_only = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ops = &msm_common_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(sep_mi2s_tx),
+	},
+};
+
+
 static struct snd_soc_dai_link msm_tdm_dai_links[] = {
 	{
 		.name = LPASS_BE_PRI_TDM_RX_0,
@@ -1698,6 +1864,8 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev,
 	int total_links = 0;
 	int rc = 0;
 	u32 val = 0;
+	u32 aw882xx_hac = 0;
+	struct device_node *hac_node;
 	const struct of_device_id *match;
 
 	match = of_match_node(pineapple_asoc_machine_of_match, dev->of_node);
@@ -1774,13 +1942,41 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev,
 		       sizeof(msm_common_be_dai_links));
 		total_links += ARRAY_SIZE(msm_common_be_dai_links);
 
+		hac_node = of_find_node_by_path("/soc/qcom,qupv3_0_geni_se@ac0000/i2c@a8c000/aw882xx_smartpa@36");
+		if (hac_node && of_device_is_available(hac_node)) {
+		    dev_info(dev, "%s: Found aw882xx_smartpa@36  \n", __func__);
+		    rc = of_property_read_u32(hac_node,"aw882xx_hac", &aw882xx_hac);
+		    if (rc) {
+		        dev_info(dev, "%s: No propery of aw882xx_hac in dtsi \n", __func__);
+		        aw882xx_hac = 0;
+		    }
+		} else {
+		    dev_info(dev, "%s: No DT match aw882xx_smartpa@36 \n", __func__);
+		    aw882xx_hac = 0;
+		}
+		of_node_put(hac_node);
+
 		rc = of_property_read_u32(dev->of_node,
 				"qcom,mi2s-audio-intf", &val);
 		if (!rc && val) {
-			memcpy(msm_pineapple_dai_links + total_links,
+			/*memcpy(msm_pineapple_dai_links + total_links,
 					msm_mi2s_dai_links,
 					sizeof(msm_mi2s_dai_links));
-			total_links += ARRAY_SIZE(msm_mi2s_dai_links);
+			total_links += ARRAY_SIZE(msm_mi2s_dai_links);*/
+			dev_info(dev, "%s: aw882xx_hac %d\n", __func__, aw882xx_hac);
+			if(aw882xx_hac == 1){
+			    dev_info(dev, "%s msm_mi2s_dai_links_hac \n", __func__);
+			    memcpy(msm_pineapple_dai_links + total_links,
+					msm_mi2s_dai_links_hac,
+					sizeof(msm_mi2s_dai_links_hac));
+			    total_links += ARRAY_SIZE(msm_mi2s_dai_links_hac);
+			} else {
+			    dev_info(dev, "%s msm_mi2s_dai_links \n", __func__);
+			    memcpy(msm_pineapple_dai_links + total_links,
+					msm_mi2s_dai_links,
+					sizeof(msm_mi2s_dai_links));
+			    total_links += ARRAY_SIZE(msm_mi2s_dai_links);
+			}
 		}
 
 		rc = of_property_read_u32(dev->of_node,
