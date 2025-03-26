@@ -306,6 +306,10 @@ struct dsi_panel {
 	struct dsi_panel_ops panel_ops;
 	struct dsi_panel_calib_data calib_data;
 	struct dsi_panel_i2c_config i2c_config;
+
+#if defined(CONFIG_ARCH_FPSPRING)
+	int current_bl;
+#endif
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
