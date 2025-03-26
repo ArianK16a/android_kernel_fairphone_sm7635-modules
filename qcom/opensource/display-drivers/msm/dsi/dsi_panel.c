@@ -649,12 +649,10 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 }
 
 #if defined(CONFIG_ARCH_FPSPRING)
-int current_bl = 0;
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
 	int rc = 0;
-	int cmd_set = 0;
 	u8 payload[2] = { 0 };
 	unsigned long mode_flags = 0;
 	struct mipi_dsi_device *dsi = NULL;
@@ -676,40 +674,68 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	payload[1] = ((u16)(bl_lvl) & 0xff);
 	payload[0] = ((u16)(bl_lvl) >> 8);
 
-	DSI_INFO("refresh_rate=%d, bl_lvl=%d, current_bl=%d, %s\n",
-		timing->refresh_rate, bl_lvl, current_bl, __func__);
-    if (panel->cur_mode) {
-        if (timing->refresh_rate != 90) {
-            if ((bl_lvl <= 1290) && ((current_bl > 1290) || (current_bl == 0))) {
-                DSI_INFO("beside 90hz, DBV <= 1290, %s\n", __func__);
-                cmd_set = DSI_CMD_SET_DBV_BSD_90HZ_12PULSE_MODE;
-            } else if ((bl_lvl >= 1291) && ((current_bl < 1291)|| (current_bl == 0))) {
-                DSI_INFO("beside 90hz, DBV > 1290, %s\n", __func__);
-                cmd_set = DSI_CMD_SET_DBV_BSD_90HZ_3PULSE_MODE;
-            }
-        } else {
-            if ((bl_lvl <= 1290) && ((current_bl > 1290) || (current_bl == 0))) {
-                DSI_INFO("90hz, DBV <= 1290, %s\n", __func__);
-                cmd_set = DSI_CMD_SET_DBV_90HZ_16PULSE_MODE;
-            } else if ((bl_lvl >= 1291) && ((current_bl < 1291) || (current_bl == 0))) {
-                DSI_INFO("90hz, DBV > 1290, %s\n", __func__);
-                cmd_set = DSI_CMD_SET_DBV_90HZ_4PULSE_MODE;
-            }
-        }
-	udelay(5800);
-        rc = dsi_panel_tx_cmd_set(panel, cmd_set);
-        if (rc) {
-            DSI_ERR("[%s] failed to send cmd_set %d, rc = %d\n", panel->name, cmd_set, rc);
-        }
-    } else {
-        DSI_ERR(" cur_mode is NULL, cannot get refresh rate %s\n", __func__);
-    }
+	DSI_INFO("refresh_rate=%d, bl_lvl=%d, panel->current_bl=%d, %s\n",
+		timing->refresh_rate, bl_lvl, panel->current_bl, __func__);
+
+	if ((bl_lvl <= 1290) && ((panel->current_bl > 1290) || (panel->current_bl == 0))) {
+		DSI_INFO("DBV <= 1290, set 12pulse and 16pulse %s\n", __func__);
+		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_LOWER_BL1290_MODE);
+		if (rc) {
+			DSI_ERR("[%s] failed to send DSI_CMD_SET_DBV_LOWER_BL1290_MODE cmd, rc=%d\n",
+				panel->name, rc);
+		}
+		if (timing->refresh_rate == 60) {
+			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_60hz_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		} else if (timing->refresh_rate == 30) {
+			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_30hz_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		} else if (timing->refresh_rate == 1) {
+			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_1hz_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		}
+	} else if ((bl_lvl >= 1291) && ((panel->current_bl < 1291)|| (panel->current_bl == 0))) {
+		DSI_INFO("DBV > 1290, set 3pulse and 4pulse %s\n", __func__);
+		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_HIGHER_BL1290_MODE);
+		if (rc) {
+			DSI_ERR("[%s] failed to send DSI_CMD_SET_DBV_HIGHER_BL1290_MODE cmd, rc=%d\n",
+				panel->name, rc);
+		}
+		if (timing->refresh_rate == 60) {
+			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_60hz_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		} else if (timing->refresh_rate == 30) {
+			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_30hz_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		} else if (timing->refresh_rate == 1) {
+			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_1hz_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		}
+	}
 
 	rc = mipi_dsi_dcs_write(dsi, 0x51, payload, sizeof(payload));
 	if (rc < 0)
 		DSI_ERR("failed to update dcs backlight:%d\n", bl_lvl);
 
-	current_bl = bl_lvl;
+	panel->current_bl = bl_lvl;
 
 	if (unlikely(panel->bl_config.lp_mode))
 		dsi->mode_flags = mode_flags;
@@ -2067,10 +2093,11 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-calibration-commands",
 
 #if defined(CONFIG_ARCH_FPSPRING)
-	"qcom,mdss-dsi-dbv-bsd-90hz-12pulse-mode-command",
-	"qcom,mdss-dsi-dbv-bsd-90hz-3pulse-mode-command",
-	"qcom,mdss-dsi-dbv-90hz-16pulse-mode-command",
-	"qcom,mdss-dsi-dbv-90hz-4pulse-mode-command",
+	"t2m,mdss-dsi-dbv-lower-bl1290-mode-command",
+	"t2m,mdss-dsi-dbv-higher-bl1290-mode-command",
+	"t2m,mdss-dsi-set-60hz-mode-command",
+	"t2m,mdss-dsi-set-30hz-mode-command",
+	"t2m,mdss-dsi-set-1hz-mode-command",
 #endif
 };
 
@@ -2103,10 +2130,11 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"qcom,mdss-dsi-calibration-commands-state",
 
 #if defined(CONFIG_ARCH_FPSPRING)
-	"qcom,mdss-dsi-dbv-bsd-90hz-12pulse-mode-command-state",
-	"qcom,mdss-dsi-dbv-bsd-90hz-3pulse-mode-command-state",
-	"qcom,mdss-dsi-dbv-90hz-16pulse-mode-command-state",
-	"qcom,mdss-dsi-dbv-90hz-4pulse-mode-command-state",
+	"t2m,mdss-dsi-dbv-lower-bl1290-mode-command-state",
+	"t2m,mdss-dsi-dbv-higher-bl1290-mode-command-state",
+	"t2m,mdss-dsi-set-60hz-mode-command-state",
+	"t2m,mdss-dsi-set-30hz-mode-command-state",
+	"t2m,mdss-dsi-set-1hz-mode-command-state",
 #endif
 };
 
