@@ -1011,6 +1011,12 @@ void wcd9378_mbhc_hs_detect_exit(struct snd_soc_component *component)
 		return;
 	}
 	wcd_mbhc_stop(&wcd9378_mbhc->wcd_mbhc);
+
+	if (wcd9378_mbhc->wcd_mbhc.micbias_enable) {
+		wcd9378_micbias_control(component,
+				MIC_BIAS_2, MICB_DISABLE, false);
+		wcd9378_mbhc->wcd_mbhc.micbias_enable = false;
+	}
 }
 EXPORT_SYMBOL_GPL(wcd9378_mbhc_hs_detect_exit);
 
