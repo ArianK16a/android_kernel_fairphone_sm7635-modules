@@ -679,25 +679,25 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 
 	if ((bl_lvl <= 1290) && ((panel->current_bl > 1290) || (panel->current_bl == 0))) {
 		DSI_INFO("DBV <= 1290, set 12pulse and 16pulse %s\n", __func__);
-		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_LOWER_BL1290_MODE);
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_LOWER_BL1290_MODE);
 		if (rc) {
 			DSI_ERR("[%s] failed to send DSI_CMD_SET_DBV_LOWER_BL1290_MODE cmd, rc=%d\n",
 				panel->name, rc);
 		}
 		if (timing->refresh_rate == 60) {
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_60hz_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		} else if (timing->refresh_rate == 30) {
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_30hz_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		} else if (timing->refresh_rate == 1) {
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_1hz_MODE cmd, rc=%d\n",
 					panel->name, rc);
@@ -705,25 +705,25 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 		}
 	} else if ((bl_lvl >= 1291) && ((panel->current_bl < 1291)|| (panel->current_bl == 0))) {
 		DSI_INFO("DBV > 1290, set 3pulse and 4pulse %s\n", __func__);
-		dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_HIGHER_BL1290_MODE);
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_HIGHER_BL1290_MODE);
 		if (rc) {
 			DSI_ERR("[%s] failed to send DSI_CMD_SET_DBV_HIGHER_BL1290_MODE cmd, rc=%d\n",
 				panel->name, rc);
 		}
 		if (timing->refresh_rate == 60) {
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_60hz_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		} else if (timing->refresh_rate == 30) {
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_30hz_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		} else if (timing->refresh_rate == 1) {
-			dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_1hz_MODE cmd, rc=%d\n",
 					panel->name, rc);
