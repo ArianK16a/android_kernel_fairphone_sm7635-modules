@@ -1984,7 +1984,21 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		break;
 
 	case DRM_PANEL_EVENT_BLANK_LP:
-		ts_debug("received lp event\n");
+
+        if (notification->notif_data.early_trigger) {
+            // disable heartbeat
+            eph_heartbeat_stop(ephdata);
+            eph_dev_enter_lp_mode(ephdata);
+            eph_clear_all_host_touch_slots(ephdata);
+            if (bd->ops && bd->ops->get_brightness)
+                brightness = bd->ops->get_brightness(bd);
+            else
+                brightness = bd->props.brightness;
+            ephdata->last_brightness = brightness;
+        } else {
+			ts_debug("lp notification post commit\n");
+		}
+
 		break;
 
 	case DRM_PANEL_EVENT_FPS_CHANGE:
