@@ -42,6 +42,7 @@
 #include <linux/dmapool.h>
 #include <linux/pinctrl/consumer.h>
 #include <emkit/emkit_info.h>
+#include <linux/power_supply.h>
 
 #include <linux/soc/qcom/panel_event_notifier.h>
 #include "eswin_eph861x_project_config.h"
@@ -55,6 +56,70 @@
 
 extern void SetModuleName(int, const char *, const char *);
 char emkit_buf[256] = {0,};
+
+/* add_for_charger_start */
+struct eph_data *gephdata = NULL;
+static int eswin_ts_enable_charger_mode(struct device *dev, int mode);
+static int eswin_charger_notifier_callback(struct notifier_block *nb, unsigned long val, void *v)
+{
+	int ret = 0;
+	struct power_supply *psy = NULL;
+	union power_supply_propval prop;
+
+	psy = power_supply_get_by_name("usb");
+	if (!psy) {
+		pr_err("Couldn't get usbpsy\n");
+		return -EINVAL;
+	}
+	if (!strcmp(psy->desc->name, "usb")) {
+		if (psy && val == POWER_SUPPLY_PROP_STATUS) {
+			ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE, &prop);
+			if (ret < 0) {
+				pr_err("Couldn't get POWER_SUPPLY_PROP_ONLINE rc=%d\n", ret);
+				return ret;
+			} else {
+				if (gephdata->charger_mode != prop.intval) {
+					gephdata->charger_mode = prop.intval;
+					if (gephdata->suspended && (gephdata->charger_notify_wq != NULL))
+						queue_work(gephdata->charger_notify_wq, &gephdata->update_charger);
+				}
+			}
+		}
+	}
+	return 0;
+}
+static void eswin_update_charger(struct work_struct *work)
+{
+	int ret = 0;
+
+	ret = eswin_ts_enable_charger_mode(&gephdata->commsdevice->dev, gephdata->charger_mode);/* 0 plug in, 1 plug out */
+	if (ret) {
+		pr_err("eswin Write plug %s failed\n", gephdata->charger_mode? "in":"out");
+	}
+
+}
+void eswin_charger_init(void)
+{
+	int ret = 0;
+    if(gephdata == NULL){
+        pr_err("gephdata == NULL\n");
+            return;
+    } else {
+        gephdata->charger_mode = 0;
+        gephdata->charger_notify_wq = create_singlethread_workqueue("eswin_charger_wq");
+        if (!gephdata->charger_notify_wq) {
+            pr_err("eswin allocate eswin_charger_wq failed\n");
+            return;
+        }
+        INIT_WORK(&gephdata->update_charger, eswin_update_charger);
+        gephdata->notifier_charger.notifier_call = eswin_charger_notifier_callback;
+        ret = power_supply_reg_notifier(&gephdata->notifier_charger);
+        if (ret < 0)
+            pr_err("power_supply_reg_notifier failed\n");
+    }
+}
+/* add_for_charger_end */
+
 
 /* device settings file format version expected*/
 #define EPH_DEVICE_SETTINGS_FORMAT       "<product>EPH8610</product>"
@@ -2246,7 +2311,7 @@ static void heartbeat_work_handler(struct work_struct *work)
     struct eph_data *ephdata = container_of(dwork, struct eph_data, heartbeat_work);
     struct device *dev = &ephdata->commsdevice->dev;
 
-    dev_info(dev, "ic heartbeat work...\n");
+    //dev_info(dev, "ic heartbeat work...\n");
 
     if (atomic_read(&ephdata->heartbeat_state) <= 0)
 	    return;
@@ -2593,6 +2658,8 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     ephdata->lp = false;
     ephdata->irq_wake = false;
 
+    gephdata = ephdata;
+    eswin_charger_init();
     eph_heartbeat_start(ephdata);
 
     dev_info(dev, "%s <\n", __func__);
@@ -2777,6 +2844,22 @@ static int eph_dev_enter_normal_mode(struct eph_data *ephdata)
                 // wait tic wake
                 msleep(200);
 	    }
+
+	    if (ephdata->charger_mode) {
+            ret_val = eswin_ts_enable_charger_mode(dev, ephdata->charger_mode);
+	        if (ret_val)
+                dev_err(dev, "charger mode set failed %d\n", ret_val);
+	    }
+	    if (ephdata->glove_mode) {
+	        ret_val = eswin_ts_enable_glove_mode(dev, ephdata->glove_mode);
+	        if (ret_val)
+                dev_err(dev, "glove mode set failed %d\n", ret_val);
+	    }
+
+        ephdata->edge_suppresion = 0;
+        ret_val = eswin_ts_enable_edge_suppresion(dev, ephdata->edge_suppresion);
+	        if (ret_val)
+                dev_err(dev, "edge_suppresion mode set failed %d\n", ret_val);
 
         ephdata->lp = false;
     }

@@ -249,6 +249,11 @@ struct eph_data
     /* Indicates whether device is updating its device settings */
     bool updating_device_settings;
 
+    /* add_for_charger_start */
+	struct notifier_block notifier_charger;
+	struct workqueue_struct *charger_notify_wq;
+	struct work_struct	update_charger;
+   /*  add_for_charger_end  */
 #if defined(CONFIG_DRM)
     struct notifier_block notifier;
     void *notifier_cookie;
