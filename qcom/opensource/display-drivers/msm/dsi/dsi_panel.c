@@ -685,21 +685,21 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 				panel->name, rc);
 		}
 		if (timing->refresh_rate == 60) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60HZ_MODE);
 			if (rc) {
-				DSI_ERR("[%s] failed to send DSI_CMD_SET_60hz_MODE cmd, rc=%d\n",
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_60HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		} else if (timing->refresh_rate == 30) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30HZ_MODE);
 			if (rc) {
-				DSI_ERR("[%s] failed to send DSI_CMD_SET_30hz_MODE cmd, rc=%d\n",
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_30HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
-		} else if (timing->refresh_rate == 1) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
+		} else if (timing->refresh_rate == 10) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_10HZ_MODE);
 			if (rc) {
-				DSI_ERR("[%s] failed to send DSI_CMD_SET_1hz_MODE cmd, rc=%d\n",
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_10HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		}
@@ -711,21 +711,21 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 				panel->name, rc);
 		}
 		if (timing->refresh_rate == 60) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60HZ_MODE);
 			if (rc) {
-				DSI_ERR("[%s] failed to send DSI_CMD_SET_60hz_MODE cmd, rc=%d\n",
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_60HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		} else if (timing->refresh_rate == 30) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30hz_MODE);
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_30HZ_MODE);
 			if (rc) {
-				DSI_ERR("[%s] failed to send DSI_CMD_SET_30hz_MODE cmd, rc=%d\n",
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_30HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
-		} else if (timing->refresh_rate == 1) {
-			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_1hz_MODE);
+		} else if (timing->refresh_rate == 10) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_10HZ_MODE);
 			if (rc) {
-				DSI_ERR("[%s] failed to send DSI_CMD_SET_1hz_MODE cmd, rc=%d\n",
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_10HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		}
