@@ -50,11 +50,11 @@ int eph_read_device_information(struct eph_data *ephdata)
                               TLV_HEADER_SIZE,
                               (u8*)&tlvheader);
 
-    dev_info(&ephdata->commsdevice->dev,
-             "ESWIN - Device information request::eph_comms_write type: %d, length: %d, ret_val %d ",
-             tlvheader.type, tlvheader.length, ret_val);
     if (ret_val)
     {
+        dev_info(&ephdata->commsdevice->dev,
+             "ESWIN - Device information request::eph_comms_write type: %d, length: %d, ret_val %d ",
+             tlvheader.type, tlvheader.length, ret_val);
         return ret_val;
     }
 
