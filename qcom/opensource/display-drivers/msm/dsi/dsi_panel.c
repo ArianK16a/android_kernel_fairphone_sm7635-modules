@@ -413,6 +413,10 @@ static int dsi_panel_power_on(struct dsi_panel *panel)
 {
 	int rc = 0;
 
+#if defined(CONFIG_ARCH_FPSPRING)
+	usleep_range(10*1000, 10*1100);
+#endif
+
 	rc = dsi_panel_reset(panel);
 	if (rc) {
 		DSI_ERR("[%s] failed to reset panel, rc=%d\n", panel->name, rc);
