@@ -245,6 +245,7 @@ struct eph_data
     struct work_struct force_baseline_work;
     struct delayed_work heartbeat_work;
     atomic_t heartbeat_state;
+    int ic_fe_cnt;
 
     /* Indicates whether device is updating its device settings */
     bool updating_device_settings;
