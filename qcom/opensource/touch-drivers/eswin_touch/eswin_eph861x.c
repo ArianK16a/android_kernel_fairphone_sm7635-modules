@@ -283,7 +283,7 @@ static int eph_trigger_baseline(struct eph_data *ephdata)
 
 }
 
-static void eph_trigger_baseline_work(struct work_struct *work)
+/*static void eph_trigger_baseline_work(struct work_struct *work)
 {
     int ret_val = 0;
     struct eph_data *ephdata = container_of(work, struct eph_data, force_baseline_work);
@@ -321,7 +321,7 @@ static void eph_trigger_baseline_work(struct work_struct *work)
     } else {
         dev_info(&ephdata->commsdevice->dev, "no need force baseline\n");
     }
-}
+}*/
 
 static int eph_finger_print_enable(struct eph_data *ephdata, bool enable)
 {
@@ -535,7 +535,6 @@ static int eph_acquire_irq(struct eph_data *ephdata)
         }
 
         /* Presence of ephdata->chg_irq means IRQ initialised */
-        dev_info(&ephdata->commsdevice->dev, "zxz gpio_to_irq %lu -> %d\n", ephdata->ephplatform->gpio_chg_irq, ephdata->chg_irq);
     }
     else
     {
@@ -2006,8 +2005,8 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		 struct panel_event_notification *notification, void *client_data)
 {
 	struct eph_data *ephdata = client_data;
-    struct backlight_device *bd = ephdata->bl;
-    int brightness = 0;
+    //struct backlight_device *bd = ephdata->bl;
+    //int brightness = 0;
 
 	if (!notification) {
 		pr_err("Invalid notification\n");
@@ -2026,7 +2025,7 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 			eph_dev_enter_normal_mode(ephdata);
 	        // heartbeat work is needed
             eph_heartbeat_start(ephdata);
-            schedule_work(&ephdata->force_baseline_work);
+            //schedule_work(&ephdata->force_baseline_work);
         }
 		break;
 
@@ -2037,11 +2036,11 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
             eph_heartbeat_stop(ephdata);
             eph_dev_enter_lp_mode(ephdata);
             eph_clear_all_host_touch_slots(ephdata);
-            if (bd->ops && bd->ops->get_brightness)
+            /*if (bd->ops && bd->ops->get_brightness)
                 brightness = bd->ops->get_brightness(bd);
             else
                 brightness = bd->props.brightness;
-            ephdata->last_brightness = brightness;
+            ephdata->last_brightness = brightness;*/
         } else {
 			ts_debug("suspend notification post commit\n");
 		}
@@ -2055,11 +2054,11 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
             eph_heartbeat_stop(ephdata);
             eph_dev_enter_lp_mode(ephdata);
             eph_clear_all_host_touch_slots(ephdata);
-            if (bd->ops && bd->ops->get_brightness)
+            /*if (bd->ops && bd->ops->get_brightness)
                 brightness = bd->ops->get_brightness(bd);
             else
                 brightness = bd->props.brightness;
-            ephdata->last_brightness = brightness;
+            ephdata->last_brightness = brightness;*/
         } else {
 			ts_debug("lp notification post commit\n");
 		}
@@ -2278,6 +2277,70 @@ static int eph_pinctrl_configure(struct eph_data *ephdata, bool enable)
     return 0;
 }
 
+#define ESD_CHECK_V1 0
+
+/* Reture 0 means ic fe active, others means dead */
+static int eph_check_ic_fe_active(struct eph_data *ephdata)
+{
+    int ret = 0;
+    u8 retry = 5;
+    u8 type_match = false;
+    struct tlv_header tlvheader = {0xA8, 0};
+    struct device *dev = &ephdata->commsdevice->dev;
+    int fw_status = 0;
+
+    ret = eph_comms_write(ephdata, TLV_HEADER_SIZE, (u8*)&tlvheader);
+
+    if (ret) {
+        dev_info(dev, "%s cmd write %d\n", __func__, ret);
+        return ret;
+    }
+    /* wait a delay for TIC to be ready */
+    udelay(100);
+
+    while (false == type_match) {
+retry:
+        memset(ephdata->comms_receive_buf, 0, COMMS_BUF_SIZE);
+        ret = eph_comms_two_stage_read(ephdata, ephdata->comms_receive_buf);
+        if (ret == 0) {
+            type_match = (0xA8 == ephdata->comms_receive_buf[0]);
+            if (false == type_match) {
+                ret = eph_handle_report(ephdata, ephdata->comms_receive_buf);
+                dev_info(dev, "Process unexpected response %d\n", ret);
+		        retry--;
+		        if (retry > 0) {
+                    udelay(50);
+		            goto retry;
+		        } else
+		            break;
+            } else {
+                // process the msg
+                //dev_info(dev, "eph ic_fe_cnt %d, new %d\n", ephdata->ic_fe_cnt, *(int *)&ephdata->comms_receive_buf[3]);
+		        if (ephdata->ic_fe_cnt == *(int *)&ephdata->comms_receive_buf[3]) {
+                    ret = -1;
+		            goto exit;
+		        }
+		        ephdata->ic_fe_cnt = *(int *)&ephdata->comms_receive_buf[3];
+		        fw_status = *(int *)&ephdata->comms_receive_buf[7];
+	            if (fw_status != 0) {
+                    ret = -1;
+                    dev_info(dev, "eph fw status %d\n", fw_status);
+		            goto exit;
+		        }
+	        }
+        } else {
+	        retry--;
+	        if (retry > 0) {
+                udelay(50);
+		        goto retry;
+	        } else
+	            break;
+	    }
+    }
+exit:
+    return ret;
+}
+
 static int send_heartbeat(struct eph_data *ephdata)
 {
     int ret;
@@ -2299,7 +2362,14 @@ relock:
 	    usleep_range(900, 1000);
 	    goto relock;
     }
+#if ESD_CHECK_V1
     ret = eph_read_device_information(ephdata);
+#else
+    ret = eph_check_ic_fe_active(ephdata);
+    if (ret < 0) {
+        dev_info(&ephdata->commsdevice->dev, "eph ic fe dead!\n");
+    }
+#endif
     mutex_unlock(&ephdata->comms_mutex);
     return ret;
 }
@@ -2515,7 +2585,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
         goto err_free_mem;
     }
 
-    INIT_WORK(&ephdata->force_baseline_work, eph_trigger_baseline_work);
+    //INIT_WORK(&ephdata->force_baseline_work, eph_trigger_baseline_work);
     INIT_DELAYED_WORK(&ephdata->heartbeat_work, heartbeat_work_handler);
 
     ephdata->commsdevice = commsdevice;
@@ -2601,7 +2671,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     if (ret_val) {
 	dev_warn(dev, "read ic info failed %d", ret_val);
     } else {
-        dev_info(dev, "zxz Product ID: %u Variant ID: %u Application_version_major %u Application_version_minor: %u Bootloader_version: %u Protocol_version: %u CRC:%u\n",
+        dev_info(dev, "eswin Product ID: %u Variant ID: %u Application_version_major %u Application_version_minor: %u Bootloader_version: %u Protocol_version: %u CRC:%u\n",
                  ephdata->ephdeviceinfo.product_id, ephdata->ephdeviceinfo.variant_id,
                  ephdata->ephdeviceinfo.application_version_major, ephdata->ephdeviceinfo.application_version_minor,
                  ephdata->ephdeviceinfo.bootloader_version, ephdata->ephdeviceinfo.protocol_version, ephdata->ephdeviceinfo.crc);
@@ -2831,19 +2901,24 @@ static int eph_dev_enter_normal_mode(struct eph_data *ephdata)
         if (ephdata->gesture_wakeup_enable) {
             disable_irq_wake(ephdata->chg_irq);
             ephdata->irq_wake = false;
+#if 0
             ret_val = eph_gesture_mode_set(ephdata, ephdata->gesture_mode & (~BIT(0)));
 	        if (ret_val)
                 dev_err(dev, "gesture mode set failed %d\n", ret_val);
             if (eph_enable_report_event(dev, 1)) {
                 dev_warn(dev, "disable ic report ev faild\n");
             }
+#else
+            eph_reset_device(ephdata);
+            ephdata->gesture_mode &= (~BIT(0));
+#endif
 	    } else {
                 // wake up tic
                 ret_val = eph_deep_mode_enable(ephdata, 0);
                 enable_irq(ephdata->chg_irq);
-                // wait tic wake
-                msleep(200);
 	    }
+        // wait tic wake
+        msleep(200);
 
 	    if (ephdata->charger_mode) {
             ret_val = eswin_ts_enable_charger_mode(dev, ephdata->charger_mode);
@@ -2886,7 +2961,7 @@ static int __maybe_unused eph_suspend(struct device *dev)
     if (ephdata->suspended == true)
         return 0;
 
-    cancel_work_sync(&ephdata->force_baseline_work);
+    //cancel_work_sync(&ephdata->force_baseline_work);
 
     mutex_lock(&ephdata->inputdev->mutex);
 
