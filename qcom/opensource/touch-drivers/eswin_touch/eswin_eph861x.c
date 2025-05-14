@@ -2915,6 +2915,9 @@ static int eph_dev_enter_normal_mode(struct eph_data *ephdata)
 	    } else {
                 // wake up tic
                 ret_val = eph_deep_mode_enable(ephdata, 0);
+                msleep(5);
+                eph_clear_all_host_touch_slots(ephdata);
+                eph_reset_device(ephdata);
                 enable_irq(ephdata->chg_irq);
 	    }
         // wait tic wake
