@@ -353,6 +353,10 @@ static void eph_recv_touch_report(struct eph_data *ephdata, u8 *message)
 
     if (RELEASE_TYPE == touch_type)
     {
+        if(!stored_touches && !prev_stored_touches) {
+            dev_err(dev, "already cleaned\n");
+            return;
+        }
         // report the last touch spot
         input_mt_report_slot_state(ephdata->inputdev, touch_tool_type, 1);
         if (ephplatform->panel_invert_x)
