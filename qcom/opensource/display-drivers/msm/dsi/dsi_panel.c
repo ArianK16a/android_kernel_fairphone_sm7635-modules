@@ -678,17 +678,23 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	payload[1] = ((u16)(bl_lvl) & 0xff);
 	payload[0] = ((u16)(bl_lvl) >> 8);
 
-	DSI_INFO("refresh_rate=%d, bl_lvl=%d, panel->current_bl=%d, %s\n",
+	DSI_DEBUG("refresh_rate=%d, bl_lvl=%d, panel->current_bl=%d, %s\n",
 		timing->refresh_rate, bl_lvl, panel->current_bl, __func__);
 
 	if ((bl_lvl <= 1290) && ((panel->current_bl > 1290) || (panel->current_bl == 0))) {
-		DSI_INFO("DBV <= 1290, set 12pulse and 16pulse %s\n", __func__);
+		DSI_DEBUG("DBV <= 1290, set 12pulse and 16pulse %s\n", __func__);
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_LOWER_BL1290_MODE);
 		if (rc) {
 			DSI_ERR("[%s] failed to send DSI_CMD_SET_DBV_LOWER_BL1290_MODE cmd, rc=%d\n",
 				panel->name, rc);
 		}
-		if (timing->refresh_rate == 60) {
+		if (timing->refresh_rate == 120) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_120HZ_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_120HZ_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		} else if (timing->refresh_rate == 60) {
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60HZ_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_60HZ_MODE cmd, rc=%d\n",
@@ -708,13 +714,19 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 			}
 		}
 	} else if ((bl_lvl >= 1291) && ((panel->current_bl < 1291)|| (panel->current_bl == 0))) {
-		DSI_INFO("DBV > 1290, set 3pulse and 4pulse %s\n", __func__);
+		DSI_DEBUG("DBV > 1290, set 3pulse and 4pulse %s\n", __func__);
 		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_DBV_HIGHER_BL1290_MODE);
 		if (rc) {
 			DSI_ERR("[%s] failed to send DSI_CMD_SET_DBV_HIGHER_BL1290_MODE cmd, rc=%d\n",
 				panel->name, rc);
 		}
-		if (timing->refresh_rate == 60) {
+		if (timing->refresh_rate == 120) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_120HZ_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_120HZ_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		} else if (timing->refresh_rate == 60) {
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_60HZ_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_60HZ_MODE cmd, rc=%d\n",
@@ -747,7 +759,7 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	return rc;
 }
 
-#elif
+#else
 
 static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
@@ -2099,6 +2111,7 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 #if defined(CONFIG_ARCH_FPSPRING)
 	"t2m,mdss-dsi-dbv-lower-bl1290-mode-command",
 	"t2m,mdss-dsi-dbv-higher-bl1290-mode-command",
+	"t2m,mdss-dsi-set-120hz-mode-command",
 	"t2m,mdss-dsi-set-60hz-mode-command",
 	"t2m,mdss-dsi-set-30hz-mode-command",
 	"t2m,mdss-dsi-set-1hz-mode-command",
@@ -2136,6 +2149,7 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 #if defined(CONFIG_ARCH_FPSPRING)
 	"t2m,mdss-dsi-dbv-lower-bl1290-mode-command-state",
 	"t2m,mdss-dsi-dbv-higher-bl1290-mode-command-state",
+	"t2m,mdss-dsi-set-120hz-mode-command-state",
 	"t2m,mdss-dsi-set-60hz-mode-command-state",
 	"t2m,mdss-dsi-set-30hz-mode-command-state",
 	"t2m,mdss-dsi-set-1hz-mode-command-state",
