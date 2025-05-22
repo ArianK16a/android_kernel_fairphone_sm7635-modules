@@ -80,12 +80,23 @@ int eph_check_ic_update(struct eph_data *ephdata, const struct firmware *fw)
 
     memcpy(&fw_info, fw->data, sizeof(struct eph_firmware_info));
 
+#if 0
     if ((fw_info.product_id != dev_info->product_id) && (fw_info.variant_id !=
         dev_info->variant_id)) {
         dev_info(dev, "product version diff or requested fw no info in head");
         return ret;
     }
-
+#else
+    if (fw_info.product_id != dev_info->product_id) {
+        dev_info(dev, "requested fw no info in head %x %x\n",
+            fw_info.product_id, dev_info->product_id);
+        return 1;
+    }
+    if (fw_info.variant_id != dev_info->variant_id) {
+        dev_info(dev, "variant id diff %x %x\n",
+            fw_info.variant_id, dev_info->variant_id);
+    }
+#endif
     // check crc
     if (fw_info.crc != eph_get_data_crc((u8 *)&fw_info, sizeof(struct eph_firmware_info) - 1)) {
         dev_err(dev, "requested fw info is incompete");

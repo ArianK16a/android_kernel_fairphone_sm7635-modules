@@ -32,6 +32,8 @@
 
 #include <linux/backlight.h>
 
+#define IC_UPDATE_DETECT 1
+
 #define ESWIN_EPH861X_SPI_USE_DMA 0
 #if (ESWIN_EPH861X_SPI_USE_DMA)
 #include <linux/dma-mapping.h>
