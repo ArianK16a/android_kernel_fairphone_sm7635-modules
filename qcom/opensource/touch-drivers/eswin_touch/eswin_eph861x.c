@@ -3011,7 +3011,7 @@ static int __maybe_unused eph_resume(struct device *dev)
     return 0;
 }
 
-static SIMPLE_DEV_PM_OPS(eph_pm_ops, eph_suspend, eph_resume);
+//static SIMPLE_DEV_PM_OPS(eph_pm_ops, eph_suspend, eph_resume);
 
 #ifdef CONFIG_OF // Open Firmware (Device Tree)
 static const struct of_device_id eph_of_match[] =
@@ -3038,7 +3038,7 @@ static struct comms_driver eph_driver =
         .name   = "eswin_eph861x",
         .owner  = THIS_MODULE,
         .of_match_table = of_match_ptr(eph_of_match),
-        .pm = &eph_pm_ops,
+        //.pm = &eph_pm_ops,
     },
 
 };
