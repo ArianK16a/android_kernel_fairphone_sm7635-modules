@@ -36,7 +36,7 @@ KBUILD_OPTIONS += CONFIG_CNSS_HW_SECURE_DISABLE=y
 KBUILD_OPTIONS += CONFIG_BUS_AUTO_SUSPEND=y
 endif
 
-KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(OUT_DIR)/../sm8650-modules/qcom/opensource/securemsm-kernel/Module.symvers
+KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS=$(OUT_DIR)/../sm7635-modules/qcom/opensource/securemsm-kernel/Module.symvers
 endif
 
 all: modules

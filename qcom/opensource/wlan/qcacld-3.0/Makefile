@@ -48,8 +48,8 @@ endif
 endif
 
 KBUILD_EXTRA_SYMBOLS := \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/wlan/platform/Module.symvers \
-    $(OUT_DIR)/../sm8650-modules/qcom/opensource/dataipa/drivers/platform/msm/Module.symvers
+    $(OUT_DIR)/../sm7635-modules/qcom/opensource/wlan/platform/Module.symvers \
+    $(OUT_DIR)/../sm7635-modules/qcom/opensource/dataipa/drivers/platform/msm/Module.symvers
 
 all:
 	$(MAKE) -C $(KERNEL_SRC) M=$(M) modules $(KBUILD_OPTIONS)
