@@ -716,6 +716,12 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_10HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
+		} else if (timing->refresh_rate == 90) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_90HZ_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_90HZ_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
 		}
 	} else if ((bl_lvl >= 1291) && ((panel->current_bl < 1291)|| (panel->current_bl == 0))) {
 		DSI_DEBUG("DBV > 1290, set 3pulse and 4pulse %s\n", __func__);
@@ -746,6 +752,12 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_10HZ_MODE);
 			if (rc) {
 				DSI_ERR("[%s] failed to send DSI_CMD_SET_10HZ_MODE cmd, rc=%d\n",
+					panel->name, rc);
+			}
+		} else if (timing->refresh_rate == 90) {
+			rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_90HZ_MODE);
+			if (rc) {
+				DSI_ERR("[%s] failed to send DSI_CMD_SET_90HZ_MODE cmd, rc=%d\n",
 					panel->name, rc);
 			}
 		}
@@ -2118,7 +2130,8 @@ const char *cmd_set_prop_map[DSI_CMD_SET_MAX] = {
 	"t2m,mdss-dsi-set-120hz-mode-command",
 	"t2m,mdss-dsi-set-60hz-mode-command",
 	"t2m,mdss-dsi-set-30hz-mode-command",
-	"t2m,mdss-dsi-set-1hz-mode-command",
+	"t2m,mdss-dsi-set-10hz-mode-command",
+	"t2m,mdss-dsi-set-90hz-mode-command",
 #endif
 };
 
@@ -2156,7 +2169,8 @@ const char *cmd_set_state_map[DSI_CMD_SET_MAX] = {
 	"t2m,mdss-dsi-set-120hz-mode-command-state",
 	"t2m,mdss-dsi-set-60hz-mode-command-state",
 	"t2m,mdss-dsi-set-30hz-mode-command-state",
-	"t2m,mdss-dsi-set-1hz-mode-command-state",
+	"t2m,mdss-dsi-set-10hz-mode-command-state",
+	"t2m,mdss-dsi-set-90hz-mode-command-state",
 #endif
 };
 
@@ -5067,11 +5081,18 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 {
 	int rc = 0;
 
+#if defined(CONFIG_ARCH_FPSPRING)
+	struct mipi_dsi_device *dsi = &panel->mipi_device;
+	if (!dsi)
+		return -EINVAL;
+#endif
+
 	if (!panel) {
 		DSI_ERR("invalid params\n");
 		return -EINVAL;
 	}
-
+	DSI_INFO("enter %s, %d, panel->panel_initialized=%d, panel->power_mode=%d, dsi_panel_is_type_oled(panel)=%d\n",
+		__func__, __LINE__, panel->panel_initialized, panel->power_mode, dsi_panel_is_type_oled(panel));
 	mutex_lock(&panel->panel_lock);
 	if (!panel->panel_initialized)
 		goto exit;
@@ -5087,10 +5108,16 @@ int dsi_panel_set_lp1(struct dsi_panel *panel)
 		panel->power_mode != SDE_MODE_DPMS_LP2)
 		dsi_pwr_panel_regulator_mode_set(&panel->power_info,
 			"ibb", REGULATOR_MODE_IDLE);
+	DSI_INFO("set DSI_CMD_SET_LP1");
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_LP1);
 	if (rc)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_LP1 cmd, rc=%d\n",
 		       panel->name, rc);
+
+#if defined(CONFIG_ARCH_FPSPRING)
+	mipi_dsi_dcs_read(dsi, MIPI_DCS_NOP, NULL, 0);
+#endif
+
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -5122,11 +5149,18 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 {
 	int rc = 0;
 
+#if defined(CONFIG_ARCH_FPSPRING)
+	struct mipi_dsi_device *dsi = &panel->mipi_device;
+	if (!dsi)
+		return -EINVAL;
+#endif
+
 	if (!panel) {
 		DSI_ERR("invalid params\n");
 		return -EINVAL;
 	}
 
+	DSI_INFO("enter %s\n", __func__);
 	mutex_lock(&panel->panel_lock);
 	if (!panel->panel_initialized)
 		goto exit;
@@ -5143,6 +5177,11 @@ int dsi_panel_set_nolp(struct dsi_panel *panel)
 	if (rc)
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_NOLP cmd, rc=%d\n",
 		       panel->name, rc);
+
+#if defined(CONFIG_ARCH_FPSPRING)
+	mipi_dsi_dcs_read(dsi, MIPI_DCS_NOP, NULL, 0);
+#endif
+
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;
@@ -5511,7 +5550,7 @@ int dsi_panel_enable(struct dsi_panel *panel)
 		DSI_ERR("Invalid params\n");
 		return -EINVAL;
 	}
-
+	DSI_INFO("enter %s, panel->panel_mode=%d\n", __func__, panel->panel_mode);
 	mutex_lock(&panel->panel_lock);
 
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_ON);
@@ -5599,7 +5638,7 @@ int dsi_panel_disable(struct dsi_panel *panel)
 		DSI_ERR("invalid params\n");
 		return -EINVAL;
 	}
-
+	DSI_INFO("enter %s, panel->power_mode=%d\n", __func__, panel->power_mode);
 	mutex_lock(&panel->panel_lock);
 
 	/* Avoid sending panel off commands when ESD recovery is underway */
