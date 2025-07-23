@@ -1,0 +1,7 @@
+# SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note
+
+header-y += audio-codec-port-types.h
+header-y += qcom,audio-ext-clk.h
+header-y += qcom,bolero-clk-rsc.h
+header-y += qcom,gpr.h
+header-y += qcom,lpass-cdc-clk-rsc.h
