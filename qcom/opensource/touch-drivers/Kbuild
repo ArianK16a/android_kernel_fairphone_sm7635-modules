@@ -177,14 +177,14 @@ ifeq ($(CONFIG_TOUCHSCREEN_EPHTouch), y)
 	LINUX_INC += -include $(TOUCH_ROOT)/eswin_touch/eswin_eph861x_types.h
 
 	eswin_ts-y := \
-         ./eswin_touch/eswin_eph861x.o \
-         ./eswin_touch/eswin_eph861x_bootloader.o \
-         ./eswin_touch/eswin_eph861x_comms.c \
-         ./eswin_touch/eswin_eph861x_eswin.c \
-         ./eswin_touch/eswin_eph861x_i2c.c \
-         ./eswin_touch/eswin_eph861x_spi.c \
-         ./eswin_touch/eswin_eph861x_tlv_command.c \
-         ./eswin_touch/eswin_eph861x_tlv_report.c
+		 ./eswin_touch/eswin_eph861x.o \
+		 ./eswin_touch/eswin_eph861x_bootloader.o \
+		 ./eswin_touch/eswin_eph861x_comms.o \
+		 ./eswin_touch/eswin_eph861x_eswin.o \
+		 ./eswin_touch/eswin_eph861x_i2c.o \
+		 ./eswin_touch/eswin_eph861x_spi.o \
+		 ./eswin_touch/eswin_eph861x_tlv_command.o \
+		 ./eswin_touch/eswin_eph861x_tlv_report.o
 
 	obj-$(CONFIG_MSM_TOUCH) += eswin_ts.o
 endif
