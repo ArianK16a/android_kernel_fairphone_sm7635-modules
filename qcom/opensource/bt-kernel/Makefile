@@ -11,6 +11,7 @@ KBUILD_OPTIONS += CONFIG_BTFM_CODEC=m
 KBUILD_OPTIONS += CONFIG_I2C_RTC6226_QCA=m
 KBUILD_OPTIONS += CONFIG_BTFM_SWR=m
 KBUILD_EXTRA_SYMBOLS := \
+    $(OUT_DIR)/../sm7635-modules/qcom/opensource/audio-kernel/Module.symvers \
     $(OUT_DIR)/../sm7635-modules/qcom/opensource/securemsm-kernel/Module.symvers \
     $(OUT_DIR)/../sm7635-modules/qcom/opensource/wlan/platform/Module.symvers
 
