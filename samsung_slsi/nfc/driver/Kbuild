@@ -4,6 +4,10 @@ LINUXINCLUDE   += -I$(NFC_ROOT)/../../../qcom/opensource/securemsm-kernel/smcinv
 LINUXINCLUDE   += -I$(NFC_ROOT)/../../../qcom/opensource/securemsm-kernel/linux/
 LINUXINCLUDE   += -I$(NFC_ROOT)/../../../qcom/opensource/securemsm-kernel/include/linux/
 
+ccflags-y += -DCONFIG_SEC_NFC_IF_I2C=1
+ccflags-y += -DCONFIG_SEC_NFC_PRODUCT_N5=1
+ccflags-y += -DCONFIG_SEC_NFC_GPIO_CLK_AWAKE=1
+
 obj-m += sec_nfc.o
 
 #source files
