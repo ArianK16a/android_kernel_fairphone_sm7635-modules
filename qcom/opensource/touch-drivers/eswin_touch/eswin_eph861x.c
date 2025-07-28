@@ -2001,6 +2001,33 @@ static int eph_dev_enter_normal_mode(struct eph_data *ephdata);
 #endif
 
 #if defined(CONFIG_DRM)
+static void eph_suspend_work(struct work_struct *work)
+{
+	struct eph_data *ephdata =
+		container_of(work, struct eph_data, suspend_work);
+
+	// disable heartbeat
+	eph_heartbeat_stop(ephdata);
+	eph_dev_enter_lp_mode(ephdata);
+	eph_clear_all_host_touch_slots(ephdata);
+	/*if (bd->ops && bd->ops->get_brightness)
+		brightness = bd->ops->get_brightness(bd);
+	else
+		brightness = bd->props.brightness;
+	ephdata->last_brightness = brightness;*/
+}
+
+static void eph_resume_work(struct work_struct *work)
+{
+	struct eph_data *ephdata =
+		container_of(work, struct eph_data, resume_work);
+
+	eph_dev_enter_normal_mode(ephdata);
+	// heartbeat work is needed
+	eph_heartbeat_start(ephdata);
+	// schedule_work(&ephdata->force_baseline_work);
+}
+
 static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
 		 struct panel_event_notification *notification, void *client_data)
 {
@@ -2022,25 +2049,16 @@ static void eph_panel_notifier_callback(enum panel_event_notifier_tag tag,
         if (notification->notif_data.early_trigger) {
 			ts_debug("resume notification pre commit\n");
 		} else {
-			eph_dev_enter_normal_mode(ephdata);
-	        // heartbeat work is needed
-            eph_heartbeat_start(ephdata);
-            //schedule_work(&ephdata->force_baseline_work);
+			flush_workqueue(ephdata->power_wq);
+			queue_work(ephdata->power_wq, &ephdata->resume_work);
         }
 		break;
 
 	case DRM_PANEL_EVENT_BLANK:
 
 		if (notification->notif_data.early_trigger) {
-            // disable heartbeat
-            eph_heartbeat_stop(ephdata);
-            eph_dev_enter_lp_mode(ephdata);
-            eph_clear_all_host_touch_slots(ephdata);
-            /*if (bd->ops && bd->ops->get_brightness)
-                brightness = bd->ops->get_brightness(bd);
-            else
-                brightness = bd->props.brightness;
-            ephdata->last_brightness = brightness;*/
+			flush_workqueue(ephdata->power_wq);
+			queue_work(ephdata->power_wq, &ephdata->suspend_work);
         } else {
 			ts_debug("suspend notification post commit\n");
 		}
@@ -2706,6 +2724,18 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     }
 
 #if defined(CONFIG_DRM)
+    ephdata->power_wq = alloc_workqueue(
+	    "eph-power-queue", WQ_UNBOUND | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
+
+    if (!ephdata->power_wq) {
+	    dev_err(dev, "cannot create power work thread");
+	    ret_val = -ENOMEM;
+	    goto err_free_irq;
+    }
+
+    INIT_WORK(&ephdata->resume_work, eph_resume_work);
+    INIT_WORK(&ephdata->suspend_work, eph_suspend_work);
+
     eph_register_for_panel_events(node, ephdata);
     // ephdata->notifier.notifier_call = eph_notifier_callback;
     // ret_val = msm_drm_register_client(&ephdata->notifier);
