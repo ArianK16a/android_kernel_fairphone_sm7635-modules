@@ -260,6 +260,11 @@ struct eph_data
 #if defined(CONFIG_DRM)
     struct notifier_block notifier;
     void *notifier_cookie;
+
+    /* suspend/resume will be defered to a workqueue */
+    struct workqueue_struct *power_wq;
+    struct work_struct resume_work;
+    struct work_struct suspend_work;
 // #elif defined(CONFIG_BOARD_CLOUDRIPPER)
 //     bool is_panel_lp_mode;
 //     struct drm_connector *connector;
