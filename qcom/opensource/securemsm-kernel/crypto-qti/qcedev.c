@@ -581,6 +581,9 @@ static int start_offload_cipher_req(struct qcedev_control *podev,
 		case QCEDEV_OFFLOAD_HLOS_HLOS_1:
 		case QCEDEV_OFFLOAD_HLOS_CPB:
 		case QCEDEV_OFFLOAD_HLOS_CPB_1:
+		case QCEDEV_OFFLOAD_HLOS_CPB_2:
+		case QCEDEV_OFFLOAD_HLOS_CPB_3:
+		case QCEDEV_OFFLOAD_HLOS_CPB_4:
 			creq.dir = QCE_DECRYPT;
 			break;
 		case QCEDEV_OFFLOAD_CPB_HLOS:

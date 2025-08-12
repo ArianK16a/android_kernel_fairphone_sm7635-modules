@@ -4,7 +4,7 @@ package(
     ],
 )
 
-load("//build/kernel/kleaf:kernel.bzl", "ddk_headers")
+load("//build/kernel/kleaf:kernel.bzl", "ddk_headers", "ddk_uapi_headers")
 
 ddk_headers(
     name = "smcinvoke_kernel_headers",
@@ -75,6 +75,23 @@ ddk_headers(
         "smmu-proxy/include/uapi/linux/*.h"
     ]),
     includes = [".", "smmu-proxy"],
+)
+
+filegroup(
+    name = "_securemsm_uapi_headers",
+    srcs = glob([
+        "include/uapi/linux/*.h",
+        "smmu-proxy/include/uapi/linux/*.h",
+    ]),
+)
+
+ddk_uapi_headers(
+    name = "msm_securemsm_ddk_uapi_headers",
+    srcs = [
+        ":_securemsm_uapi_headers",
+    ],
+    out = "securemsm-uapi-headers.tar.gz",
+        kernel_build = "//:target_kernel_build",
 )
 
 load(":build/pineapple.bzl", "define_pineapple")

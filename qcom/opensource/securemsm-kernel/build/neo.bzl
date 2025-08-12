@@ -16,6 +16,7 @@ def define_neo():
         ],
         extra_options = [
             "CONFIG_QCOM_SMCINVOKE",
+            "CONFIG_QSEECOM_COMPAT",
         ],
     )
 
