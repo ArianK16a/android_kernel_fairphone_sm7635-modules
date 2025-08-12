@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2021-2023, Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2025, Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
@@ -691,6 +691,8 @@ static int dp_parser_mst(struct dp_parser *parser)
 	parser->has_mst = of_property_read_bool(dev->of_node,
 			"qcom,mst-enable");
 	parser->has_mst_sideband = parser->has_mst;
+	parser->dp_mst_lm_merge_en = of_property_read_bool(dev->of_node,
+			"qcom,dp-mst-lm-merge-en");
 
 	DP_DEBUG("mst parsing successful. mst:%d\n", parser->has_mst);
 
