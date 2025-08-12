@@ -393,9 +393,12 @@ static int cam_tpg_validate_cmd_descriptor(
 {
 	int rc = 0;
 	uintptr_t generic_ptr;
-	size_t len_of_buff = 0;
-	uint32_t                *cmd_buf = NULL;
-	struct tpg_command_header_t *cmd_header = NULL;
+	size_t            len_of_buff                 = 0;
+	size_t            remain_len                  = 0;
+	ssize_t           cmd_header_size             = 0;
+	uint32_t          *cmd_buf                    = NULL;
+	struct tpg_command_header_t *cmd_header_user  = NULL;
+	struct tpg_command_header_t *cmd_header       = NULL;
 
 	if (!cmd_desc || !cmd_type || !cmd_addr)
 		return -EINVAL;
@@ -408,15 +411,65 @@ static int cam_tpg_validate_cmd_descriptor(
 		return rc;
 	}
 
-	cmd_buf = (uint32_t *)generic_ptr;
-	cmd_buf += cmd_desc->offset / 4;
-	cmd_header = (struct tpg_command_header_t *)cmd_buf;
-
-	if (len_of_buff < sizeof(struct tpg_command_header_t)) {
-		CAM_ERR(CAM_TPG, "Got invalid command descriptor of invalid cmd buffer size");
+	if (cmd_desc->offset >= len_of_buff) {
+		CAM_ERR(CAM_TPG, "Buffer Offset: %d past length of buffer %zu",
+			cmd_desc->offset,
+			len_of_buff);
 		rc = -EINVAL;
 		goto end;
 	}
+	remain_len = len_of_buff - cmd_desc->offset;
+
+	if ((cmd_desc->size > remain_len) ||
+		(cmd_desc->length > cmd_desc->size)) {
+		CAM_ERR(CAM_TPG, "Invalid cmd desc, size: %zu remainlen: %zu length: %zu",
+			cmd_desc->size,
+			remain_len,
+			cmd_desc->length);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	if (remain_len < sizeof(struct tpg_command_header_t)) {
+		CAM_ERR(CAM_TPG, "Invalid buf size, remain len: %zu cmd header size: %zu",
+			remain_len,
+			sizeof(struct tpg_command_header_t));
+		rc = -EINVAL;
+		goto end;
+	}
+
+	cmd_buf = (uint32_t *)generic_ptr;
+	cmd_buf += cmd_desc->offset / sizeof(uint32_t);
+	cmd_header_user = (struct tpg_command_header_t *)cmd_buf;
+
+	cmd_header_size = cmd_header_user->size;
+
+	/* Check for cmd_header_size overflow or underflow condition */
+	if ((cmd_header_size < 0) ||
+		((SIZE_MAX - cmd_header_size) < cmd_desc->offset)) {
+		CAM_ERR(CAM_TPG, "Invalid cmd header size: %zu, offset: %d",
+			cmd_header_size,
+			cmd_desc->offset);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	if ((cmd_desc->offset + (size_t)cmd_header_size) > len_of_buff) {
+		CAM_ERR(CAM_TPG, "Cmd header offset mismatch, offset: %d size: %zu len: %zu",
+			cmd_desc->offset,
+			cmd_header_size,
+			len_of_buff);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	cmd_header = kmemdup(cmd_header_user, cmd_header_size, GFP_KERNEL);
+	if (!cmd_header) {
+		CAM_ERR(CAM_TPG, "Local cmd_header mem allocation failed");
+		rc = -ENOMEM;
+		goto end;
+	}
+	cmd_header->size = cmd_header_size;
 
 	switch (cmd_header->cmd_type) {
 	case TPG_CMD_TYPE_GLOBAL_CONFIG: {

@@ -624,6 +624,7 @@ static int cam_ois_fw_info_pkt_parser(struct cam_ois_ctrl_t *o_ctrl,
 	struct i2c_settings_array      *reg_settings = NULL;
 	uint8_t                         count = 0;
 	uint32_t                        idx;
+	uint8_t                         ois_fw_count = 0;
 
 	if (!o_ctrl || !cmd_buf || len < sizeof(struct cam_cmd_ois_fw_info)) {
 		CAM_ERR(CAM_OIS, "Invalid Args,o_ctrl %p,cmd_buf %p,len %d",
@@ -632,15 +633,16 @@ static int cam_ois_fw_info_pkt_parser(struct cam_ois_ctrl_t *o_ctrl,
 	}
 
 	ois_fw_info = (struct cam_cmd_ois_fw_info *)cmd_buf;
+	ois_fw_count = ois_fw_info->fw_count;
 	CAM_DBG(CAM_OIS, "endianness %d, fw_count %d",
-		ois_fw_info->endianness, ois_fw_info->fw_count);
+		ois_fw_info->endianness, ois_fw_count);
 
-	if (ois_fw_info->fw_count <= MAX_OIS_FW_COUNT) {
+	if (ois_fw_count <= MAX_OIS_FW_COUNT) {
 		memcpy(&o_ctrl->fw_info, ois_fw_info, sizeof(struct cam_cmd_ois_fw_info));
+		o_ctrl->fw_info.fw_count = ois_fw_count;
 		pSettingData = (uint8_t *)cmd_buf + sizeof(struct cam_cmd_ois_fw_info);
-
-		if ((ois_fw_info->param_mask & CAM_OIS_FW_VERSION_CHECK_MASK) == 0x1) {
-			version_size = ois_fw_info->params[0];
+		if ((o_ctrl->fw_info.param_mask & CAM_OIS_FW_VERSION_CHECK_MASK) == 0x1) {
+			version_size = o_ctrl->fw_info.params[0];
 			CAM_DBG(CAM_OIS, "versionSize: %d", version_size);
 		}
 
@@ -656,16 +658,16 @@ static int cam_ois_fw_info_pkt_parser(struct cam_ois_ctrl_t *o_ctrl,
 			pSettingData += version_size;
 		}
 
-		for (count = 0; count < ois_fw_info->fw_count*2; count++) {
+		for (count = 0; count <  o_ctrl->fw_info.fw_count*2; count++) {
 			idx = count / 2;
 			/* init settings */
 			if ((count & 0x1) == 0) {
-				size = ois_fw_info->fw_param[idx].fw_init_size;
+				size =  o_ctrl->fw_info.fw_param[idx].fw_init_size;
 				reg_settings = &o_ctrl->i2c_fw_init_data[idx];
 				CAM_DBG(CAM_OIS, "init size %d", size);
 			/* finalize settings */
 			} else if ((count & 0x1) == 1) {
-				size = ois_fw_info->fw_param[idx].fw_finalize_size;
+				size = o_ctrl->fw_info.fw_param[idx].fw_finalize_size;
 				reg_settings = &o_ctrl->i2c_fw_finalize_data[idx];
 				CAM_DBG(CAM_OIS, "finalize size %d", size);
 			} else {
@@ -688,6 +690,7 @@ static int cam_ois_fw_info_pkt_parser(struct cam_ois_ctrl_t *o_ctrl,
 		}
 	} else {
 		CAM_ERR(CAM_OIS, "Exceed max fw count");
+		return -EINVAL;
 	}
 
 	return rc;
