@@ -6,6 +6,7 @@ ifeq ($(TARGET_KERNEL_DLKM_DISABLE), true)
 	endif
 endif
 
+ifneq ($(ENABLE_HYP), true)
 ifeq ($(FASTRPC_DLKM_ENABLED), true)
 DLKM_DIR   := device/qcom/common/dlkm
 
@@ -49,5 +50,7 @@ include $(DLKM_DIR)/Build_external_kernelmodule.mk
 $(info KBUILD_OPTIONS = $(KBUILD_OPTIONS))
 $(info intermediates dsp symvers path = $(call intermediates-dir-for,DLKM,dsp-module-symvers))
 $(info DLKM_DIR = $(DLKM_DIR))
+
+endif
 
 endif
