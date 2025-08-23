@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1301,6 +1301,8 @@ struct dp_soc_stats {
 		uint32_t rx_hw_stats_requested;
 		/* Number of hw stats request timeout */
 		uint32_t rx_hw_stats_timeout;
+		/* Dropped fragment count */
+		uint32_t rx_frag_drop_cnt;
 
 		struct {
 			/* Invalid RBM error count */
@@ -3269,6 +3271,8 @@ struct dp_soc {
 #endif
 	/* monitor interface flags */
 	uint32_t mon_flags;
+	/* flag to check if wds is not supported */
+	bool wds_not_supported;
 };
 
 #ifdef IPA_OFFLOAD
