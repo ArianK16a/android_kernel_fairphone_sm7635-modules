@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2002,2007-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 #include <asm/cacheflush.h>
@@ -1529,6 +1529,7 @@ void kgsl_free_secure_page(struct page *page)
 {
 	struct sg_table sgt;
 	struct scatterlist sgl;
+	int ret;
 
 	if (!page)
 		return;
@@ -1539,8 +1540,16 @@ void kgsl_free_secure_page(struct page *page)
 	sg_init_table(&sgl, 1);
 	sg_set_page(&sgl, page, PAGE_SIZE, 0);
 
-	kgsl_unlock_sgt(&sgt);
-	__free_page(page);
+	ret = kgsl_unlock_sgt(&sgt);
+	if (ret)
+		/*
+		 * Unlock of the secure page failed. This page will be
+		 * stuck in secure side forever and is unrecoverable.
+		 * Give up on this page and don't free it.
+		 */
+		pr_err("kgsl_unlock_sgt failed ret %d\n", ret);
+	else
+		__free_page(page);
 }
 
 struct page *kgsl_alloc_secure_page(void)
