@@ -13,6 +13,8 @@ KBUILD_EXTRA_SYMBOLS += \
     $(OUT_DIR)/../sm7635-modules/qcom/opensource/synx-kernel/Module.symvers
 endif
 
+KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS+=$(M)/../securemsm-kernel/Module.symvers
+
 all: modules
 
 CAMERA_COMPILE_TIME = $(shell date)
