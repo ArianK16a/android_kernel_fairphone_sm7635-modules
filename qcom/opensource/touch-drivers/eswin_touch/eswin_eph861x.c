@@ -1055,12 +1055,12 @@ static int eph_gesture_mode_set(struct eph_data *ephdata, u8 gesture_mode)
 
     mutex_lock(&ephdata->comms_mutex);
     ret_val = eph_write_control_config(ephdata, length, (u8 *)&tlv[0]);
-    mutex_unlock(&ephdata->comms_mutex);
 
     if (likely(!ret_val))
         ephdata->gesture_mode = gesture_mode;
     else
         dev_err(&ephdata->commsdevice->dev, "Set/Clr gesture mode fail\n");
+    mutex_unlock(&ephdata->comms_mutex);
 
     return ret_val;
 }
@@ -1327,7 +1327,7 @@ static ssize_t eph_devattr_gesture_wakeup_store(struct device *dev,
         return -EINVAL;
 
     switch (input) {
-    case 1:
+    case 2:
         /* enable tap */
         if (ephdata->gesture_mode & BIT(1)) {
             dev_info(&ephdata->commsdevice->dev, "tap already set\n");
@@ -1335,7 +1335,7 @@ static ssize_t eph_devattr_gesture_wakeup_store(struct device *dev,
         }
         gesture_mode = BIT(1);
         break;
-    case 2:
+    case 1:
         /* enable double tap */
         if (ephdata->gesture_mode & BIT(2)) {
             dev_info(&ephdata->commsdevice->dev, "double tap already set\n");
@@ -1351,7 +1351,7 @@ static ssize_t eph_devattr_gesture_wakeup_store(struct device *dev,
         }
         gesture_mode = BIT(3);
         break;
-    case -1:
+    case -2:
         /* disable tap */
         if ((ephdata->gesture_mode & BIT(1)) == 0) {
             dev_info(&ephdata->commsdevice->dev, "tap not set\n");
@@ -1359,7 +1359,7 @@ static ssize_t eph_devattr_gesture_wakeup_store(struct device *dev,
         }
         gesture_mode |= ~BIT(1);
         break;
-    case -2:
+    case -1:
         /* disable double tap */
         if ((ephdata->gesture_mode & BIT(2)) == 0) {
             dev_info(&ephdata->commsdevice->dev, "double tap not set\n");
@@ -2931,17 +2931,17 @@ static int eph_dev_enter_normal_mode(struct eph_data *ephdata)
         if (ephdata->gesture_wakeup_enable) {
             disable_irq_wake(ephdata->chg_irq);
             ephdata->irq_wake = false;
-#if 0
+// #if 0
             ret_val = eph_gesture_mode_set(ephdata, ephdata->gesture_mode & (~BIT(0)));
 	        if (ret_val)
                 dev_err(dev, "gesture mode set failed %d\n", ret_val);
             if (eph_enable_report_event(dev, 1)) {
                 dev_warn(dev, "disable ic report ev faild\n");
             }
-#else
-            eph_reset_device(ephdata);
-            ephdata->gesture_mode &= (~BIT(0));
-#endif
+// #else
+//             eph_reset_device(ephdata);
+//             ephdata->gesture_mode &= (~BIT(0));
+// #endif
 	    } else {
                 // wake up tic
                 ret_val = eph_deep_mode_enable(ephdata, 0);
