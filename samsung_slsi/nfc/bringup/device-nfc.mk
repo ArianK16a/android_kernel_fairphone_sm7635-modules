@@ -64,9 +64,3 @@ endif
 
 # Build NFC kernel driver
 PRODUCT_PACKAGES += sec_nfc.ko
-
-ifneq ($(strip $(TARGET_BUILD_VARIANT)),user)
-PRODUCT_VENDOR_PROPERTIES += persist.log.tag=V
-PRODUCT_VENDOR_PROPERTIES += persist.nfc.vendor_debug_enabled=true
-PRODUCT_VENDOR_PROPERTIES += persist.nfc.debug_enabled=true
-endif
