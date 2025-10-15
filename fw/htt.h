@@ -271,9 +271,10 @@
  * 3.141 Add H2T HTT_AST_INFO for RxOLE.
  * 3.142 Add T2H GLOBAL_PEER_ID_UNMAP def, update H2T MPDUQ_OR_MSDUQ_INFO def.
  * 3.143 Add T2H HAPS msg def.
+ * 3.144 Add svc_inst_req_type in htt_h2t_mpduq_or_msduq_info.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 143
+#define HTT_CURRENT_VERSION_MINOR 144
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -11792,6 +11793,13 @@ typedef enum {
     HTT_H2T_MAX_TID_NUM            = 31,
 } H2T_TX_TID;
 
+typedef enum {
+    HTT_SAWF_SVC_INST_CREATE_REQ = 0,
+    HTT_SAWF_SVC_INST_DEACTIVATE_REQ,
+    HTT_SAWF_SVC_INST_REACTIVATE_REQ,
+    HTT_SAWF_SVC_INST_DELETE_REQ,
+} HTT_SAWF_SVC_INST_REQ_TYPE;
+
 /* HTT_H2T_MSG_TYPE_MPDUQ_OR_MSDUQ_INFO */
 PREPACK struct htt_h2t_mpduq_or_msduq_info {
    A_UINT32 msg_type:          8,  /* bits  7:0  */
@@ -11801,28 +11809,33 @@ PREPACK struct htt_h2t_mpduq_or_msduq_info {
 
     union {
         struct {
-            A_UINT32 mpduq_address_39_8;     /* bits 31:0  */
-            A_UINT32 mpduq_number:       24, /* bits 23:0  */
-                     pn_addr_39_32:       8; /* bits 31:24 */
-            A_UINT32 pn_addr_31_0;           /* bits 31:0  */
-            A_UINT32 reserved1a;             /* bits 31:0  */
-            A_UINT32 reserved1b;             /* bits 31:0  */
-            A_UINT32 reserved1c;             /* bits 31:0  */
-            A_UINT32 reserved1d;             /* bits 31:0  */
-            A_UINT32 reserved1e;             /* bits 31:0  */
-            A_UINT32 reserved1f;             /* bits 31:0  */
+            A_UINT32 mpduq_address_39_8;          /* bits 31:0  */
+            A_UINT32 mpduq_number:            24, /* bits 23:0  */
+                     pn_addr_39_32:            8; /* bits 31:24 */
+            A_UINT32 pn_addr_31_0;                /* bits 31:0  */
+            A_UINT32 reserved1a;                  /* bits 31:0  */
+            A_UINT32 reserved1b;                  /* bits 31:0  */
+            A_UINT32 reserved1c;                  /* bits 31:0  */
+            A_UINT32 reserved1d;                  /* bits 31:0  */
+            A_UINT32 reserved1e;                  /* bits 31:0  */
+            A_UINT32 reserved1f;                  /* bits 31:0  */
         };
         struct {
-            A_UINT32 tx_msduq_number:    24, /* bits 23:0  */
-                     svc_class_id:        8; /* bits 31:24 */
-            A_UINT32 msduq_address_39_8;     /* bits 31:0  */
-            A_UINT32 reserved2a;             /* bits 31:0  */
-            A_UINT32 reserved2b;             /* bits 31:0  */
-            A_UINT32 reserved2c;             /* bits 31:0  */
-            A_UINT32 reserved2d;             /* bits 31:0  */
-            A_UINT32 reserved2e;             /* bits 31:0  */
-            A_UINT32 reserved2f;             /* bits 31:0  */
-            A_UINT32 reserved2g;             /* bits 31:0  */
+            A_UINT32 tx_msduq_number:         24, /* bits 23:0  */
+                     svc_class_id:             8; /* bits 31:24 */
+            A_UINT32 msduq_address_39_8;          /* bits 31:0  */
+            A_UINT32 svc_inst_req_type_valid:  1, /* bit    0   */
+                     /* svc_inst_req_type:
+                      * contains a HTT_SAWF_SVC_INST_REQ_TYPE value
+                      */
+                     svc_inst_req_type:        3, /* bits  3:1  */
+                     reserved2a:              28; /* bits 31:4  */
+            A_UINT32 reserved2b;                  /* bits 31:0  */
+            A_UINT32 reserved2c;                  /* bits 31:0  */
+            A_UINT32 reserved2d;                  /* bits 31:0  */
+            A_UINT32 reserved2e;                  /* bits 31:0  */
+            A_UINT32 reserved2f;                  /* bits 31:0  */
+            A_UINT32 reserved2g;                  /* bits 31:0  */
         };
     };
 } POSTPACK;
@@ -11961,6 +11974,28 @@ PREPACK struct htt_h2t_mpduq_or_msduq_info {
     do {                                                     \
         HTT_CHECK_SET_VAL(HTT_H2T_MSG_TYPE_MSDUQ_INFO_MSDUQ_ADDRESS_39_8, _val);  \
         ((_var) |= ((_val) << HTT_H2T_MSG_TYPE_MSDUQ_INFO_MSDUQ_ADDRESS_39_8_S)); \
+    } while (0)
+
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID_M 0x00000001
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID_S          0
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID_GET(_var) \
+        (((_var) & HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID_M) >> \
+                HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID_S)
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID_SET(_var, _val) \
+    do {                                                     \
+        HTT_CHECK_SET_VAL(HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID, _val);  \
+        ((_var) |= ((_val) << HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_VALID_S)); \
+    } while (0)
+
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_M       0x0000000E
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_S                1
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_GET(_var) \
+        (((_var) & HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_M) >> \
+                HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_S)
+#define HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_SET(_var, _val) \
+    do {                                                     \
+        HTT_CHECK_SET_VAL(HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE, _val);  \
+        ((_var) |= ((_val) << HTT_H2T_MSG_TYPE_MSDUQ_INFO_SVC_INST_REQ_TYPE_S)); \
     } while (0)
 
 
