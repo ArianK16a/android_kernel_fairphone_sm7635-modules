@@ -730,6 +730,12 @@ typedef  enum  {
     WMI_SERVICE_CFP_SUPPORT = 469, /* FW supports control frame protection */
     WMI_SERVICE_CFP_PADDING_SUPPORT = 470, /* FW supports control frame protection padding */
 
+    /* Service caps related to 11BI */
+    WMI_SERVICE_11BI_EPPKE_SUPPORT = 471,
+    WMI_SERVICE_11BI_1X_OVER_AUTH_SUPPORT = 472,
+    WMI_SERVICE_11BI_PMKID_PRIVACY_SUPPORT = 473,
+    WMI_SERVICE_11BI_DS_MAC_ADDR_SUPPORT = 474,
+
 
     WMI_MAX_EXT2_SERVICE
 
