@@ -607,6 +607,8 @@ typedef enum {
      * for the pdev
      */
     WMI_PDEV_MULTI_VDEV_GET_AC_QUEUE_DEPTH_CMDID,
+    /* Event to indicate the status of the set tx chainmask command */
+    WMI_PDEV_SET_TX_CHAINMASK_COMP_EVENTID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -52269,6 +52271,22 @@ typedef struct {
      *     wmi_vdev_ac_info vdev_ac_info[];   wmi_vdev_ac_info for BE/BK/VI/VO
      */
 } wmi_pdev_multi_vdev_ac_queue_depth_event_fixed_param;
+
+typedef enum {
+    WMI_PDEV_SET_TX_CHAINMASK_SUCCESS = 0,
+    WMI_PDEV_SET_TX_CHAINMASK_FAIL_INVALID_CHAINMASK,
+} WMI_PDEV_SET_TX_CHAINMASK_COMP_STATUS_TYPE;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_tx_chainmask_comp_event_fixed_param */
+    /** pdev_id for identifying the MAC
+     */
+    A_UINT32 pdev_id;
+    /*
+     * status type WMI_PDEV_SET_TX_CHAINMASK_COMP_STATUS_TYPE
+     */
+    A_UINT32 status;
+} wmi_pdev_set_tx_chainmask_comp_event_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals
