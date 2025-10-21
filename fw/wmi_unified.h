@@ -19806,6 +19806,18 @@ typedef enum {
      */
     WMI_VDEV_PARAM_2xLDPC,                                /* 0xCA */
 
+    /**
+     * Self-capability support indication for CCK RX/TX in 5GHz band.
+     * Use with WMI_VDEV_SET_PARAM_CMDID, value:
+     *    BIT 0 - cck_rx_support_5ghz
+     *    BIT 1 - cck_tx_support_5ghz
+     *
+     * Host must only set this param when enabled by ini and
+     * WMI_SERVICE_CCK_RX_SUPPORT_5GHZ/WMI_SERVICE_CCK_TX_SUPPORT_5GHZ
+     * (FW capability bits) are present.
+     */
+    WMI_VDEV_PARAM_CCK_SUPPORT,                           /* 0xCB */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -22647,9 +22659,19 @@ typedef struct {
     /** Peer create flags */
     union {
         struct {
-            A_UINT32 hw_peer_id_valid : 1,
-                     peer_type_valid  : 1,
-                     reserved         :30;
+            A_UINT32 hw_peer_id_valid         : 1,
+                     peer_type_valid          : 1,
+                     /**
+                      * Host sets these peer_cck [rx,tx] support_5ghz fields
+                      * based on the intersection of AP and self-capabilities.
+                      * Example:
+                      *     On the STA, if the peer (AP) supports CCK 5GHz RX
+                      *     and the STA supports CCK 5GHz TX, then set
+                      *     peer_cck_rx_support_5ghz = 1
+                      */
+                     peer_cck_rx_support_5ghz : 1,
+                     peer_cck_tx_support_5ghz : 1,
+                     reserved                 :28;
         };
         A_UINT32 flags;
     };
@@ -22690,6 +22712,12 @@ typedef struct {
 
 #define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_TYPE_VALID_GET(flags) WMI_GET_BITS(flags, 1, 1)
 #define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_TYPE_VALID_SET(flags, value) WMI_GET_BITS(flags, 1, 1, value)
+
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_RX_SUPPORT_5GHZ_GET(flags) WMI_GET_BITS(flags, 2, 1)
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_RX_SUPPORT_5GHZ_SET(flags, value) WMI_GET_BITS(flags, 2, 1, value)
+
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_TX_SUPPORT_5GHZ_GET(flags) WMI_GET_BITS(flags, 3, 1)
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_TX_SUPPORT_5GHZ_SET(flags, value) WMI_GET_BITS(flags, 3, 1, value)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_npca_cap_params*/

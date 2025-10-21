@@ -736,6 +736,9 @@ typedef  enum  {
     WMI_SERVICE_11BI_PMKID_PRIVACY_SUPPORT = 473,
     WMI_SERVICE_11BI_DS_MAC_ADDR_SUPPORT = 474,
 
+    WMI_SERVICE_CCK_RX_SUPPORT_5GHZ = 475, /* Indicates FW supports CCK RX in 5 GHz band */
+    WMI_SERVICE_CCK_TX_SUPPORT_5GHZ = 476, /* Indicates FW supports CCK TX in 5 GHZ band */
+
 
     WMI_MAX_EXT2_SERVICE
 
