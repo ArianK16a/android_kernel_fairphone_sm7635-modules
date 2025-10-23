@@ -19818,6 +19818,12 @@ typedef enum {
      */
     WMI_VDEV_PARAM_CCK_SUPPORT,                           /* 0xCB */
 
+    /*
+     * value 0 | disable dynamic D-SMPS base on RSSI feature
+     * value 1 | enable dynamic D-SMPS base on RSSI feature
+     */
+    WMI_VDEV_PARAM_ENABLE_DYN_DSMPS_BASE_ON_RSSI,         /* 0xCC */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
