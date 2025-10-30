@@ -22714,16 +22714,16 @@ typedef struct {
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
 #define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_HW_PEER_ID_VALID_GET(flags) WMI_GET_BITS(flags, 0, 1)
-#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_HW_PEER_ID_VALID_SET(flags, value) WMI_GET_BITS(flags, 0, 1, value)
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_HW_PEER_ID_VALID_SET(flags, value) WMI_SET_BITS(flags, 0, 1, value)
 
 #define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_TYPE_VALID_GET(flags) WMI_GET_BITS(flags, 1, 1)
-#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_TYPE_VALID_SET(flags, value) WMI_GET_BITS(flags, 1, 1, value)
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_TYPE_VALID_SET(flags, value) WMI_SET_BITS(flags, 1, 1, value)
 
 #define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_RX_SUPPORT_5GHZ_GET(flags) WMI_GET_BITS(flags, 2, 1)
-#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_RX_SUPPORT_5GHZ_SET(flags, value) WMI_GET_BITS(flags, 2, 1, value)
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_RX_SUPPORT_5GHZ_SET(flags, value) WMI_SET_BITS(flags, 2, 1, value)
 
 #define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_TX_SUPPORT_5GHZ_GET(flags) WMI_GET_BITS(flags, 3, 1)
-#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_TX_SUPPORT_5GHZ_SET(flags, value) WMI_GET_BITS(flags, 3, 1, value)
+#define WMI_PEER_ASSOC_COMPLETE_CMD_FLAG_PEER_CCK_TX_SUPPORT_5GHZ_SET(flags, value) WMI_SET_BITS(flags, 3, 1, value)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_npca_cap_params*/
