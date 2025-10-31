@@ -19820,10 +19820,15 @@ typedef enum {
     WMI_VDEV_PARAM_CCK_SUPPORT,                           /* 0xCB */
 
     /*
-     * value 0 | disable dynamic D-SMPS base on RSSI feature
-     * value 1 | enable dynamic D-SMPS base on RSSI feature
+     * BIT 0:
+     *     value 0 | disable D-SMPS
+     *     value 1 | enable D-SMPS
+     * BIT 1:
+     *     value 0 | disable dynamic D-SMPS base on RSSI feature
+     *     value 1 | enable dynamic D-SMPS base on RSSI feature
      */
-    WMI_VDEV_PARAM_ENABLE_DYN_DSMPS_BASE_ON_RSSI,         /* 0xCC */
+    WMI_VDEV_PARAM_DSMPS_CONTROL,                         /* 0xCC */
+
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
