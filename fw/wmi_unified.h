@@ -21978,6 +21978,8 @@ typedef struct {
  */
 #define WMI_PEER_PARAM_UNSOL_PROBE_RESP_INTVL          0x2C
 
+#define WMI_PEER_PARAM_SET_MESH_NODE                   0x2D
+#define WMI_PEER_PARAM_SET_QUALCOMM_NODE               0x2E
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
