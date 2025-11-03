@@ -1514,7 +1514,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_tpc_ie_power_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_coex_stats,
     WMITLV_TAG_STRUC_wmi_vdev_traffic_monitoring_cmd_fixed_param,
-    WMITLV_TAG_STRUC_wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES_EXT2,
     WMITLV_TAG_STRUC_wmi_peer_assoc_cfp_params,
     WMITLV_TAG_STRUC_wmi_pdev_set_tx_chainmask_comp_event_fixed_param,
@@ -2096,7 +2096,7 @@ typedef enum {
     OP(WMI_VDEV_GET_TPC_IE_POWER_CMDID) \
     OP(WMI_PEER_ASSOC_V2_CMDID) \
     OP(WMI_VDEV_TRAFFIC_MONITORING_CMDID) \
-    OP(WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID) \
+    OP(WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -5931,9 +5931,9 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTI_VDEV_GET_AC_QUEUE_DEPTH_CMDID);
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_TRAFFIC_MONITORING_CMDID);
 
 /* WMI command to control Dynamic Power Save - AP Assisting role config */
-#define WMITLV_TABLE_WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
-WMITLV_CREATE_PARAM_STRUC(WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
+#define WMITLV_TABLE_WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
 
 
 

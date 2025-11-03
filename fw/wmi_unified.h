@@ -741,6 +741,9 @@ typedef enum {
     /** data traffic monitoring */
     WMI_VDEV_TRAFFIC_MONITORING_CMDID,
 
+    /** WMI cmd used to control DPS Assisting AP role config */
+    WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID,
+
     /* peer specific commands */
 
     /** create a peer */
@@ -1769,8 +1772,6 @@ typedef enum {
     WMI_ENERGY_MGMT_PUO_CONFIG_CMDID,
     /** WMI cmd used to control ECO mode config */
     WMI_ENERGY_MGMT_ECO_MODE_CONFIG_CMDID,
-    /** WMI cmd used to control DPS Assisting AP role config */
-    WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -19819,10 +19820,15 @@ typedef enum {
     WMI_VDEV_PARAM_CCK_SUPPORT,                           /* 0xCB */
 
     /*
-     * value 0 | disable dynamic D-SMPS base on RSSI feature
-     * value 1 | enable dynamic D-SMPS base on RSSI feature
+     * BIT 0:
+     *     value 0 | disable D-SMPS
+     *     value 1 | enable D-SMPS
+     * BIT 1:
+     *     value 0 | disable dynamic D-SMPS base on RSSI feature
+     *     value 1 | enable dynamic D-SMPS base on RSSI feature
      */
-    WMI_VDEV_PARAM_ENABLE_DYN_DSMPS_BASE_ON_RSSI,         /* 0xCC */
+    WMI_VDEV_PARAM_DSMPS_CONTROL,                         /* 0xCC */
+
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -19995,7 +20001,10 @@ typedef enum {
          *      0 - Disable RTT Bandwidth downgrade
          *      1 - Enable RTT Bandwidth downgrade
          */
-        WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_BW_DOWNGRADE,    /* 0x8014 */
+        WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_BW_DOWNGRADE,/* 0x8014 */
+
+        /* customized txop for vendor configuration in unit of us */
+        WMI_VDEV_PARAM_SU_TXOP_BURST_LIMIT_US,         /* 0x8015 */
 
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
@@ -21969,6 +21978,8 @@ typedef struct {
  */
 #define WMI_PEER_PARAM_UNSOL_PROBE_RESP_INTVL          0x2C
 
+#define WMI_PEER_PARAM_SET_MESH_NODE                   0x2D
+#define WMI_PEER_PARAM_SET_QUALCOMM_NODE               0x2E
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param */
@@ -40225,7 +40236,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_TID_RATE_CUSTOM_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_GET_TPC_IE_POWER_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_TRAFFIC_MONITORING_CMDID);
-        WMI_RETURN_STRING(WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -52341,11 +52352,13 @@ typedef enum {
 
 typedef struct {
     /** TLV tag and len; tag equals
-    * WMITLV_TAG_STRUC_wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param */
+    * WMITLV_TAG_STRUC_wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param */
     A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
     /** holds a wmi_dps_assisting_role_e value */
     A_UINT32 config;
-} wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param;
+} wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param;
 
 
 
