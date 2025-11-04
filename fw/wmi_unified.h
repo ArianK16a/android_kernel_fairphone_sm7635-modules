@@ -385,6 +385,9 @@ typedef enum {
     /** initialize the wlan sub system */
     WMI_INIT_CMDID = 0x1,
 
+    /** WMI command to specify the driver's mode of operation */
+    WMI_WLAN_MODE_REQ_CMDID,
+
     /* Scan specific commands */
 
     /** start scan request to FW  */
@@ -1789,6 +1792,23 @@ typedef enum {
      * the target supports
      */
     WMI_IFACE_COMBINATION_IND_EVENTID,
+
+    /** WMI evt that indicates FW basic initializations are done, and FW
+     *  is ready to receive the WLAN mode specification from the host.
+     *
+     * mode selection handshake:
+     *     host <-- WMI_FW_READY_IND_EVENTID <---- target
+     *     host --> WMI_WLAN_MODE_REQ_CMDID -----> target
+     *     host <-- WMI_WLAN_MODE_RESP_EVENTID <-- target
+     * precedes the WLAN initialization handshake:
+     *     host <-- WMI_SERVICE_READY_EVENTID <--- target
+     *     host --> WMI_INIT_CMDID --------------> target
+     *     host <-- WMI_READY_EVENTID <----------- target
+     */
+    WMI_FW_READY_IND_EVENTID,
+    /* WMI evt to acknowledge the driver mode specified by host */
+    WMI_WLAN_MODE_RESP_EVENTID,
+
 
     /** Scan specific events */
     WMI_SCAN_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_SCAN),
@@ -40237,6 +40257,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_GET_TPC_IE_POWER_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_TRAFFIC_MONITORING_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_WLAN_MODE_REQ_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
@@ -52359,6 +52380,68 @@ typedef struct {
     /** holds a wmi_dps_assisting_role_e value */
     A_UINT32 config;
 } wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param;
+
+
+/* WMI evt to indicate FW is ready */
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_fw_ready_ind_event_fixed_param */
+    A_UINT32 tlv_header;
+} wmi_fw_ready_ind_event_fixed_param;
+
+typedef enum {
+    WMI_DRIVER_MODE_MISSION,
+    WMI_DRIVER_MODE_FTM,
+    WMI_DRIVER_MODE_OFF,
+} WMI_DRIVER_MODE;
+
+/** WMI command to indicate the driver mode of operation */
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_wlan_mode_req_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* This indicates driver mode of operation from host */
+    A_UINT32 mode; /* refer to WMI_DRIVER_MODE enum */
+} wmi_wlan_mode_req_cmd_fixed_param;
+
+typedef enum {
+    WMI_DRIVER_MODE_RESP_SUCCESS,
+    WMI_DRIVER_MODE_RESP_FAILURE,
+} WMI_WLAN_DRIVER_MODE_RESP_STATUS;
+
+typedef enum {
+    WMI_DRIVER_FAIL_REASON_UNKNOWN_MODE,
+    /* In FTM mode, initiate PHY error */
+    WMI_DRIVER_FAIL_REASON_FTM_PHY_INIT_ERR,
+    /* For both MISSION and FTM mode, set power error */
+    WMI_DRIVER_FAIL_REASON_POWER_INIT_ERR,
+    WMI_DRIVER_FAIL_REASON_MODE_OFF_ERR,
+} WMI_WLAN_MODE_FAILURE_REASON;
+
+/* Host/Firmware can get/set the status bits using below macros */
+#define WMI_WLAN_DRIVER_MODE_RESP_STATUS_GET(status) WMI_GET_BITS(status, 0, 16)
+#define WMI_WLAN_DRIVER_MODE_RESP_STATUS_SET(status, value) WMI_SET_BITS(status, 0, 16, value)
+
+#define WMI_WLAN_DRIVER_MODE_RESP_FAILURE_GET(mode) WMI_GET_BITS(mode, 16, 16)
+#define WMI_WLAN_DRIVER_MODE_RESP_FAILURE_SET(mode, value) WMI_GET_BITS(mode, 16, 16, value)
+
+/* WMI evt to acknowledge the driver mode sent by host */
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_wlan_mode_resp_event_fixed_param */
+    A_UINT32 tlv_header;
+    /* The status word contains the following bitfields:
+     * bits 15:0  - Indicates whether the FW has accepted
+     *              (WMI_DRIVER_MODE_RESP_SUCCESS) or rejected
+     *              (WMI_DRIVER_MODE_RESP_FAILURE) the driver mode
+     *              specified by the host.
+     * bits 31:16 - Indicates the reason if the FW has rejected
+     *              the driver mode.
+     *              This field is only relevant if the status is
+     *              WMI_DRIVER_MODE_RESP_FAILURE.
+     */
+    A_UINT32 status;
+} wmi_wlan_mode_resp_event_fixed_param;
 
 
 
