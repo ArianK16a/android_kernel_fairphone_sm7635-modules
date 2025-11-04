@@ -6892,11 +6892,19 @@ typedef struct {
     A_UINT32 npca_tx_su_punctured_mode[HTT_TX_PDEV_STATS_NUM_PUNCTURED_MODE_COUNTERS];
     /* STA side trigger stats */
     A_UINT32 trigger_type_11bn[HTT_TX_PDEV_STATS_NUM_11BN_TRIGGER_TYPES];
+#if 0
+    /* NOTE:
+     * The tx_mcs_ext_3 field is being reverted at least temporarily,
+     * to work around message size limits in certain targets.
+     * If/when this revert becomes permanent, this "#if 0" block will
+     * be removed altogether.
+     */
     /* Stats for iMCS 1.1, 3.1, 4.1, 7.1 */
     A_UINT32 tx_mcs_ext_3[HTT_TX_PDEV_STATS_NUM_EXTRA3_MCS_COUNTERS];
+#endif
 
 /*
- * NOTE: THIS STRUCT HAS ONLY 4 BYTES OF SPACE LEFT
+ * NOTE: THIS STRUCT HAS ONLY 20 BYTES OF SPACE LEFT
  * WITHIN THE TARGET'S HTT_STATS_TLV_MAX_LEN SIZE LIMIT.
  */
 } htt_stats_tx_pdev_rate_stats_tlv;
