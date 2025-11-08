@@ -273,9 +273,10 @@
  * 3.143 Add T2H HAPS msg def.
  * 3.144 Add svc_inst_req_type in htt_h2t_mpduq_or_msduq_info.
  * 3.145 Add 3rd bit for rx_hdr_len in RX_RING_SELECTION_CFG
+ * 3.146 Add HTT_RXOLE_ASE_STATUS_RING def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 145
+#define HTT_CURRENT_VERSION_MINOR 146
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -5526,6 +5527,7 @@ enum htt_srng_ring_id {
     HTT_RXDMA_WBM_BUF0_RING,       /* used for SFE Datapath */
     HTT_RXDMA_WBM_BUF1_RING,       /* used for PPE Datapath */
     HTT_RXDMA_WBM_BUF2_RING,       /* used for MGMT path */
+    HTT_RXOLE_ASE_STATUS_RING,     /* RxOLE2SW ASE Status ring */
     /* Add Other SRING which can't be directly configured by host software above this line */
 };
 
