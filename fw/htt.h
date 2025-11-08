@@ -274,9 +274,10 @@
  * 3.144 Add svc_inst_req_type in htt_h2t_mpduq_or_msduq_info.
  * 3.145 Add 3rd bit for rx_hdr_len in RX_RING_SELECTION_CFG
  * 3.146 Add HTT_RXOLE_ASE_STATUS_RING def.
+ * 3.147 Add direct_refill flag in SRING_SETUP msg.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 146
+#define HTT_CURRENT_VERSION_MINOR 147
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -5494,7 +5495,8 @@ PREPACK struct htt_sring_setup_t {
              prefetch_timer_cfg:  3,
              response_required:   1,
              ipa_drop_flag:      1,
-             reserved1:          11;
+             direct_refill:      1,
+             reserved1:          10;
     A_UINT32 ipa_drop_low_threshold:    8,
              ipa_drop_high_threshold:   8,
              reserved:                  16;
@@ -5852,6 +5854,27 @@ enum htt_srng_ring_id {
             ((_var) |= ((_val) << HTT_SRING_SETUP_RESPONSE_REQUIRED_S)); \
         } while (0)
 
+#define HTT_SRING_SETUP_IPA_DROP_FLAG_M        0x00100000
+#define HTT_SRING_SETUP_IPA_DROP_FLAG_S        20
+#define HTT_SRING_SETUP_IPA_DROP_FLAG_GET(_var) \
+        (((_var) & HTT_SRING_SETUP_IPA_DROP_FLAG_M) >> \
+                HTT_SRING_SETUP_IPA_DROP_FLAG_S)
+#define HTT_SRING_SETUP_IPA_DROP_FLAG_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_SRING_SETUP_IPA_DROP_FLAG, _val); \
+            ((_var) |= ((_val) << HTT_SRING_SETUP_IPA_DROP_FLAG_S)); \
+        } while (0)
+
+#define HTT_SRING_SETUP_DIRECT_REFILL_M        0x00200000
+#define HTT_SRING_SETUP_DIRECT_REFILL_S        21
+#define HTT_SRING_SETUP_DIRECT_REFILL_GET(_var) \
+        (((_var) & HTT_SRING_SETUP_DIRECT_REFILL_M) >> \
+                HTT_SRING_SETUP_DIRECT_REFILL_S)
+#define HTT_SRING_SETUP_DIRECT_REFILL_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_SRING_SETUP_DIRECT_REFILL, _val); \
+            ((_var) |= ((_val) << HTT_SRING_SETUP_DIRECT_REFILL_S)); \
+        } while (0)
 
 /**
  * @brief host -> target RX ring selection config message

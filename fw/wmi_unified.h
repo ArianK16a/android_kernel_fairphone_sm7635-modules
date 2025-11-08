@@ -5106,8 +5106,16 @@ typedef struct {
      *      country supports SP regulatory rules.
      *      Refer to the below defintions of WMI_RSRC_CFG_HOST_SERVICE_FLAG
      *      AFC_TRIGGER_ON_DEFAULT_CC_EVENT_GET and _SET macros.
+     *  Bit 23
+     *      This bit will set by host to inform FW that direct refill to
+     *      SW2RxDMA ring is supported by the host and the ring which is
+     *      directly refilled by HOST will be indicated in the
+     *      HTT_H2T_MSG_TYPE_SRING_SETUP and FW should refill the Rx buffers
+     *      to the secondary refill ring.
+     *      Refer to the below definitions of WMI_RSRC_CFG_HOST_SERVICE_FLAG
+     *      DIRECT_REFILL_SUPPORT_GET and _SET macros.
      *
-     *  Bits 31:23 - Reserved
+     *  Bits 31:24 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -5685,6 +5693,12 @@ typedef struct {
         WMI_GET_BITS(host_service_flags, 22, 1)
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_AFC_TRIGGER_ON_DEFAULT_CC_EVENT_SET(host_service_flags, val) \
         WMI_SET_BITS(host_service_flags, 22, 1, val)
+
+/* This bit is used to inform FW that HOST supports direct Rx buffers refill to the SW2RxDMA ring*/
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_DIRECT_REFILL_SUPPORT_GET(host_service_flags) \
+         WMI_GET_BITS(host_service_flags, 23, 1)
+#define WMI_RSRC_CFG_HOST_SERVICE_FLAG_DIRECT_REFILL_SUPPORT_SET(host_service_flags, val) \
+         WMI_SET_BITS(host_service_flags, 23, 1, val)
 
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
