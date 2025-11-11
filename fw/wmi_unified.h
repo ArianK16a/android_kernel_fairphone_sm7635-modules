@@ -1503,6 +1503,13 @@ typedef enum {
     WMI_NAN_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_NAN),
     /** Command to handle OEM's NAN specific opaque data */
     WMI_NAN_OEM_DATA_CMDID,
+    /** Command to enable NAN mode */
+    WMI_NAN_ENABLE_CMDID,
+    /** Command to update NAN configuration */
+    WMI_NAN_CONFIG_CMDID,
+    /** Command to disable NAN mode */
+    WMI_NAN_DISABLE_CMDID,
+
 
     /** Modem power state command */
     WMI_MODEM_POWER_STATE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_COEX),
@@ -2543,6 +2550,14 @@ typedef enum {
     WMI_NAN_DMESG_EVENTID,
     /** Event to deliver OEM's NAN specific opaque data */
     WMI_NAN_OEM_DATA_EVENTID,
+    /** Event response to NAN enable command */
+    WMI_NAN_ENABLE_RSP_EVENTID,
+    /** Event indicating information about next Discovery Window (DW) */
+    WMI_NAN_NEXT_DW_INFO_EVENTID,
+    /** Event confirmation to NAN disable command */
+    WMI_NAN_DISABLE_CNF_EVENTID,
+    /** Event notifying FW triggered NAN disable indication */
+    WMI_NAN_DISABLE_IND_EVENTID,
 
     /* Coex Event */
     WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_COEX),
@@ -5256,11 +5271,33 @@ typedef struct {
      * BIT 2-31: Reserved
      */
     A_UINT32 dp_haps_config;
+
+    /**
+     * @brief nan_config_word
+     * BIT 0 : 7 -> Minimum lead time (in milliseconds) that firmware
+     *              must ensure before sending WMI_NAN_NEXT_DW_INFO_EVENTID,
+     *              as configured via host INI settings.
+     * BIT 8 : 31 -> Reserved
+     */
+    union {
+        A_UINT32 nan_config_word;
+        struct {
+            A_UINT32
+                dw_notif_lead_time: 8,
+                reserved2: 24;
+        };
+    };
 } wmi_resource_config;
+
 #define WMI_RSRC_CFG_APF_DATA_OFLD_ENABLE_GET(word32) \
     WMI_GET_BITS(word32, 0, 1)
 #define WMI_RSRC_CFG_APF_DATA_OFLD_ENABLE_SET(word32, value) \
     WMI_SET_BITS(word32, 0, 1, value)
+
+#define WMI_RSRC_CFG_NAN_CONFIG_DW_NOTIF_LEAD_TIME_GET(word32) \
+        WMI_GET_BITS(word32, 0, 8)
+#define WMI_RSRC_CFG_NAN_CONFIG_DW_NOTIF_LEAD_TIME_SET(word32, value) \
+        WMI_SET_BITS(word32, 0, 8, value)
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
     (((ast_x) == 0) ? 1 : ((msdu_flow_config0) & (1 << ((ast_x) - 1))))
@@ -30106,6 +30143,155 @@ typedef struct {
      */
 } wmi_nan_oem_data_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_enable_cmd_param */
+    A_UINT32 vdev_id; /* Virtual device ID used for NAN operations */
+/*
+* TLVs following this structure:
+*     wmi_nan_ctrl_config_param nan_ctrl_config[];
+*     wmi_nan_disc_band_config_param nan_disc_band_config[];
+*/
+} wmi_nan_enable_cmd_fixed_param;
+
+typedef enum {
+    WMI_NAN_DISC_BAND_PRI_2GHZ = 0x01,
+    WMI_NAN_DISC_BAND_SEC_5GHZ = 0x02,
+} WMI_NAN_DISC_BANDS;
+
+/* Macros for parsing nan_ctrl_flags field */
+#define WMI_NAN_CTRL_FLAGS_GET_ENABLE_RANGING(param) \
+        WMI_GET_BITS(param, 0, 1)
+#define WMI_NAN_CTRL_FLAGS_SET_ENABLE_RANGING(param, val) \
+        WMI_SET_BITS(param, 0, 1, val)
+#define WMI_NAN_CTRL_FLAGS_GET_ENABLE_EARLY_DW_TERMINATION(param) \
+        WMI_GET_BITS(param, 1, 1)
+#define WMI_NAN_CTRL_FLAGS_SET_ENABLE_EARLY_DW_TERMINATION(param, val) \
+        WMI_SET_BITS(param, 1, 1, val)
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_enable_cmd_fixed_param */
+    A_UINT32 master_pref; /* Master preference value for cluster formation */
+   /* Cluster ID used for synchronization.
+    * The value (lower 4 bytes) is sent in network byte order (big-endian).
+    * If set to 0, the firmware will generate a randomized cluster ID.
+    */
+    A_UINT32 cluster_id;
+    /* Service ID value for publish beacon */
+    A_UINT32 service_id_bcn_val;
+    /* Max hop count allowed for cluster joining */
+    A_UINT32 hop_count_limit_val;
+    /* Service ID value for subscribe beacon */
+    A_UINT32 subscribe_sid_beacon_val;
+    A_UINT32 config_tx_rx_chains; /* TX/RX chain configuration */
+    /* Bitfield for NAN control options,
+     * use WMI_NAN_CTRL_FLAGS_SET_* and WMI_NAN_CTRL_FLAGS_GET_* macros
+     * for access
+     */
+    union {
+        struct {
+            A_UINT32
+                /* Enable ranging capability */
+                enable_ranging: 1,
+
+                /* Enable early termination of Discovery Window */
+                enable_early_dw_termination:1,
+
+                reserved: 30; /* reserved for future use */
+        };
+        A_UINT32 nan_ctrl_flags; /* 32-bit control flags word */
+    };
+    A_UINT32 supp_disc_bands; /* Possible values are enum WMI_NAN_DISC_BANDS */
+/*
+* TLVs following this structure:
+*     wmi_nan_disc_band_config_param nan_disc_band_config[];
+*/
+} wmi_nan_ctrl_config_param;
+
+/* Macros for parsing scan_params field */
+#define WMI_NAN_DISC_SCAN_PARAMS_GET_DWELL_MS(param) \
+        WMI_GET_BITS(param, 0, 16)
+#define WMI_NAN_DISC_SCAN_PARAMS_SET_DWELL_MS(param, val) \
+        WMI_SET_BITS(param, 0, 16, val)
+
+#define WMI_NAN_DISC_SCAN_PARAMS_GET_INTERVAL_SEC(param) \
+        WMI_GET_BITS(param, 16, 16)
+#define WMI_NAN_DISC_SCAN_PARAMS_SET_INTERVAL_SEC(param, val) \
+        WMI_SET_BITS(param, 16, 16, val)
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_band_config_param */
+    /* Channel frequency (in MHz) for discovery */
+    A_UINT32 chan_freq;
+    /* Encoded scan parameters (use WMI_NAN_DISC_SCAN_PARAMS_GET/SET macros) */
+    union {
+        struct {
+            A_UINT32
+                dwell_ms:     16,
+                interval_sec: 16;
+        };
+        A_UINT32 scan_params_word;
+    };
+    /*
+     * Committed/Awake DW interval. Valid values range: 0-5.
+     * 0 indicates no wakeup for DW and can't be used on 2.4GHz band,
+     * otherwise 2^(n-1).
+     */
+    A_UINT32 awake_dw_intval;
+    /*
+     * RSSI threshold (in dBm) indicating close proximity; used to determine
+     * if a received Synchronization Beacon from a peer within the
+     * same NAN cluster should trigger a role change from Master to Non-Master
+     * Sync when the peer has a higher Master Rank.
+     */
+    A_INT32 rssi_close_val;
+    /*
+     * RSSI threshold (in dBm) indicating medium proximity; used to evaluate
+     * if three or more Synchronization Beacons from peers within the
+     * same NAN cluster justify a role change from Master to Non-Master Sync
+     * when those peers have higher Master Ranks.
+     */
+    A_INT32 rssi_middle_val;
+    /*
+     * RSSI threshold (in dBm) used to determine if a peer is within proximity
+     * during a match event
+     */
+    A_INT32 rssi_proximity_val;
+    /* Window size for RSSI averaging (based on number of beacons received) */
+    A_UINT32 rssi_avg_window_size;
+} wmi_nan_disc_band_config_param;
+
+typedef enum {
+    WMI_NAN_CONF_CHANGE_MASTER_PREF           = 0x00000001,
+    WMI_NAN_CONF_CHANGE_CLUSTER_ID            = 0x00000002,
+    WMI_NAN_CONF_CHANGE_SERVICE_ID_BCN_VAL    = 0x00000004,
+    WMI_NAN_CONF_CHANGE_HOP_COUNT_LIMIT_VAL   = 0x00000008,
+    WMI_NAN_CONF_CHANGE_SUBSCRIBE_SID_BCN_VAL = 0x00000010,
+    WMI_NAN_CONF_CHANGE_CONFIG_TX_RX_CHAINS   = 0x00000020,
+    WMI_NAN_CONF_CHANGE_ENABLE_RANGING        = 0x00000040,
+    WMI_NAN_CONF_CHANGE_ENABLE_EARLY_DW_TERM  = 0x00000080,
+    WMI_NAN_CONF_CHANGE_SUPP_DISC_BANDS       = 0x00000100,
+} WMI_NAN_CONFIG_CHANGE_PARAM;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_config_cmd_fixed_param */
+    A_UINT32 vdev_id; /* Virtual device ID used for NAN operations */
+    /* Bitmap indicating which NAN configuration parameters have changed and
+     * need to be updated by the target firmware. Each bit corresponds to a
+     * specific parameter defined in WMI_NAN_CONFIG_CHANGE_PARAM.
+     */
+    A_UINT32 nan_conf_change_bitmap;
+/*
+ * TLVs following this structure:
+ *     wmi_nan_ctrl_config_param nan_ctrl_config[];
+ *     wmi_nan_disc_band_config_param nan_disc_band_config[];
+ */
+} wmi_nan_config_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_disable_cmd_fixed_param */
+    A_UINT32 vdev_id; /* Virtual device ID used for NAN operations */
+} wmi_nan_disable_cmd_fixed_param;
+
 #define WMI_NAN_GET_RANGING_INITIATOR_ROLE(flag)      WMI_GET_BITS(flag, 0, 1)
 #define WMI_NAN_SET_RANGING_INITIATOR_ROLE(flag, val) WMI_SET_BITS(flag, 0, 1, val)
 #define WMI_NAN_GET_RANGING_RESPONDER_ROLE(flag)      WMI_GET_BITS(flag, 1, 1)
@@ -30195,7 +30381,7 @@ typedef struct {
     A_UINT32 tlv_header;
     /** Unique id identifying the VDEV */
     A_UINT32 vdev_id;
-    /** NAN Cluster ID */
+    /** NAN Cluster ID, 4 bytes are sent in network byte order (big-endian) */
     A_UINT32 nan_cluster_id;
 } wmi_nan_started_cluster_event_fixed_param_PROTOTYPE;
 
@@ -30209,7 +30395,7 @@ typedef struct {
     A_UINT32 tlv_header;
     /** Unique id identifying the VDEV */
     A_UINT32 vdev_id;
-    /** NAN Cluster ID */
+    /** NAN Cluster ID, 4 bytes are sent in network byte order (big-endian) */
     A_UINT32 nan_cluster_id;
 } wmi_nan_joined_cluster_event_fixed_param_PROTOTYPE;
 
@@ -30227,12 +30413,114 @@ typedef struct {
 } wmi_nan_dmesg_event_fixed_param;
 
 typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_enable_rsp_event_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id; /* Virtual device ID used for NAN operations */
+    A_UINT32 status; /* Status code; 0 indicates NAN enable is success */
+    A_UINT32 mac_id; /* MAC ID associated with NAN primary discovery channel */
+} wmi_nan_enable_rsp_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_next_dw_info_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id; /* Virtual device ID used for NAN operations */
+    A_UINT32 dw_chan_freq; /* DW channel freq in MHz */
+} wmi_nan_next_dw_info_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_disable_cnf_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id; /* Virtual device ID used for NAN operations */
+    A_UINT32 status; /* Status code; 0 indicates NAN enable is success */
+} wmi_nan_disable_cnf_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_disable_ind_fixed_param */
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id; /* Virtual device ID used for NAN operations */
+} wmi_nan_disable_ind_event_fixed_param;
+
+typedef enum {
+    WMI_NDP_BAND_CAP_2GHZ = 0x01,
+    WMI_NDP_BAND_CAP_5GHZ = 0x02,
+    WMI_NDP_BAND_CAP_6GHZ = 0x04,
+} WMI_NDP_BAND_CAP;
+
+/* Macros for parsing NAN device_caps fields */
+#define WMI_DEVICE_CAPS_GET_VHT_PHY_MODE(word32) \
+        WMI_GET_BITS(word32, 0, 1)
+#define WMI_DEVICE_CAPS_SET_VHT_PHY_MODE(word32, val) \
+        WMI_SET_BITS(word32, 0, 1, val)
+#define WMI_DEVICE_CAPS_GET_HE_PHY_MODE(word32) \
+        WMI_GET_BITS(word32, 1, 1)
+#define WMI_DEVICE_CAPS_SET_HE_PHY_MODE(word32, val) \
+        WMI_SET_BITS(word32, 1, 1, val)
+#define WMI_DEVICE_CAPS_GET_HE_VHT_80_80(word32) \
+        WMI_GET_BITS(word32, 2, 1)
+#define WMI_DEVICE_CAPS_SET_HE_VHT_80_80(word32, val) \
+        WMI_SET_BITS(word32, 2, 1, val)
+#define WMI_DEVICE_CAPS_GET_HE_VHT_160(word32) \
+        WMI_GET_BITS(word32, 3, 1)
+#define WMI_DEVICE_CAPS_SET_HE_VHT_160(word32, val) \
+        WMI_SET_BITS(word32, 3, 1, val)
+#define WMI_DEVICE_CAPS_GET_NUM_TX_ANT(word32) \
+        WMI_GET_BITS(word32, 4, 4)
+#define WMI_DEVICE_CAPS_SET_NUM_TX_ANT(word32, val) \
+        WMI_SET_BITS(word32, 4, 4, val)
+#define WMI_DEVICE_CAPS_GET_NUM_RX_ANT(word32) \
+        WMI_GET_BITS(word32, 8, 4)
+#define WMI_DEVICE_CAPS_SET_NUM_RX_ANT(word32, val) \
+        WMI_SET_BITS(word32, 8, 4, val)
+#define WMI_DEVICE_CAPS_GET_S3_SUPPORT(word32) \
+        WMI_GET_BITS(word32, 12, 1)
+#define WMI_DEVICE_CAPS_SET_S3_SUPPORT(word32, val) \
+        WMI_SET_BITS(word32, 12, 1, val)
+#define WMI_DEVICE_CAPS_GET_MAX_NDI_INTERFACES(word32) \
+        WMI_GET_BITS(word32, 13, 3)
+#define WMI_DEVICE_CAPS_SET_MAX_NDI_INTERFACES(word32, val) \
+        WMI_SET_BITS(word32, 13, 3, val)
+#define WMI_DEVICE_CAPS_GET_NDP_SUPPORTED_BAND(word32) \
+        WMI_GET_BITS(word32, 16, 8)
+#define WMI_DEVICE_CAPS_SET_NDP_SUPPORTED_BAND(word32, val) \
+        WMI_SET_BITS(word32, 16, 8, val)
+#define WMI_DEVICE_CAPS_GET_MAX_CHAN_SWITCH_TIME(word32) \
+        WMI_GET_BITS(word32, 0, 16)
+#define WMI_DEVICE_CAPS_SET_MAX_CHAN_SWITCH_TIME(word32, val) \
+        WMI_SET_BITS(word32, 0, 16, val)
+
+typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUCT_wmi_nan_capabilities */
     A_UINT32 tlv_header;
     /** Maximum number of ndp sessions supported by the Firmware */
     A_UINT32 max_ndp_sessions;
     /** Maximum number of nan pairing sessions supported by the Firmware */
     A_UINT32 max_pairing_sessions;
+    union {
+        /* First 32-bit word of device capabilities */
+        A_UINT32 device_caps_word0;
+        struct {
+            A_UINT32 vht_phy_mode:      1, /* Support for VHT PHY mode */
+                     he_phy_mode:       1, /* Support for HE PHY mode */
+                     he_vht_80_80:      1, /* Support for 80+80 MHz HE/VHT */
+                     he_vht_160:        1, /* Support for 160 MHz HE/VHT */
+                     num_tx_ant:        4, /* Number of TX antennas */
+                     num_rx_ant:        4, /* Number of RX antennas */
+                     s3_support:        1, /* Support for S3 power save */
+                     max_ndi_interfaces:3, /* Max number of NDI interfaces */
+                     ndp_supported_band:8, /* Supported bands for NDP
+                                            * (see WMI_NDP_BAND_CAP) */
+                     reserved:8;           /* Reserved bits */
+        };
+    };
+    union {
+        /* Second 32-bit word of device capabilities */
+        A_UINT32 device_caps_word1;
+        struct {
+            A_UINT32 max_chan_switch_time:16, /* Max channel switch time,
+                                               * in microseconds */
+                     reserved2:           16; /* Reserved bits */
+        };
+    };
 } wmi_nan_capabilities;
 
 /** NAN DATA CMD's */
@@ -40272,6 +40560,9 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_TRAFFIC_MONITORING_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_WLAN_MODE_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_NAN_ENABLE_CMDID);
+        WMI_RETURN_STRING(WMI_NAN_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_NAN_DISABLE_CMDID);
     }
 
     return (A_UINT8 *) "Invalid WMI cmd";
