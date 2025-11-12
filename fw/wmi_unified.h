@@ -5129,8 +5129,12 @@ typedef struct {
      *      to the secondary refill ring.
      *      Refer to the below definitions of WMI_RSRC_CFG_HOST_SERVICE_FLAG
      *      DIRECT_REFILL_SUPPORT_GET and _SET macros.
+     *  Bit 24
+     *      This bit will be set by host to inform FW that HOST will be
+     *      expecting and will be able to handle DCS stats event sent
+     *      by FW for concurrent vdevs (event can support max 2 vdevs data).
      *
-     *  Bits 31:24 - Reserved
+     *  Bits 31:25 - Reserved
      */
     A_UINT32 host_service_flags;
 
@@ -5737,6 +5741,11 @@ typedef struct {
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_DIRECT_REFILL_SUPPORT_SET(host_service_flags, val) \
          WMI_SET_BITS(host_service_flags, 23, 1, val)
 
+/* This bit will be used to inform FW that HOST will be handling DCS stats for multiple vdevs (max 2) */
+#define WMI_RSRC_CFG_DCS_STATS_FOR_2VDEVS_ENABLE_GET(host_service_flags) \
+    WMI_GET_BITS(host_service_flags, 24, 1)
+#define WMI_RSRC_CFG_DCS_STATS_FOR_2VDEVS_ENABLE_SET(host_service_flags, value) \
+    WMI_SET_BITS(host_service_flags, 24, 1, value)
 
 #define WMI_RSRC_CFG_CARRIER_CFG_CHARTER_ENABLE_GET(carrier_config) \
     WMI_GET_BITS(carrier_config, 0, 1)
@@ -23163,6 +23172,24 @@ typedef struct _wlan_dcs_im_tgt_stats {
 
     /** BSS rx cycle count */
     A_UINT32 my_bss_rx_cycle_count;
+
+    /*------*/
+    /* vdev id and pdev id will be added accordingly in each TLV,
+     * when combined event for 2 vdevs in case of concurrency.
+     */
+
+    /* vdev_id_and_pdev_id_valid:
+     * If set, then the below vdev_id and pdev_id fields have valid values.
+     * If not set, then the below vdev_id and pdev_id fields must be ignored.
+     */
+    A_UINT32 vdev_id_and_pdev_id_valid;
+
+    /** vdev id **/
+    A_UINT32 vdev_id;  /* unique vdev id for DCS stats info */
+
+    /** pdev id **/
+    A_UINT32 pdev_id;  /* unique pdev id for DCS stats info */
+    /*------*/
 } wlan_dcs_im_tgt_stats_t;
 
 typedef struct wlan_dcs_awgn_info {
@@ -23252,7 +23279,10 @@ typedef struct {
  * elements (not arrays).     union { wlan_dcs_cw_int cw_int; wlan_dcs_im_tgt_stats_t   wlan_stat; } int_event;
  *
  *       wlan_dcs_cw_int            cw_int[];   <-- cw_interference event
- *       wlan_dcs_im_tgt_stats_t   wlan_stat[]; <-- wlan im interference stats
+ *       wlan_dcs_im_tgt_stats_t   wlan_stat[]; <-- wlan im interference stats,
+ *                                                  Contains vdev_id + pdev_id
+ *                                                  to specify who the stats
+ *                                                  are for.
  *       wmi_dcs_awgn_int_t        awgn_int[];  <-- Additive white Gaussian noise (AWGN) interference
  *       wmi_dcs_obss_int_t        obss_int[];  <-- Overlapping Basic Service Set (OBSS) interference
  */

@@ -740,6 +740,7 @@ typedef  enum  {
     WMI_SERVICE_CCK_TX_SUPPORT_5GHZ = 476, /* Indicates FW supports CCK TX in 5 GHZ band */
     WMI_SERVICE_DIRECT_REFILL_SUPPORT = 477, /* Indicates FW supports direct refill for RX buffer ring */
     WMI_SERVICE_NAN_STANDARD_MODE_SUPPORT = 478, /* Indicates FW supports NAN in standard mode (supplicant-based NAN architecture model) */
+    WMI_SERVICE_CONC_2VDEV_DCS_STATS_SUPPORT = 479, /* Indicate FW support for collecting DCS stats for more than 1 vdev (max 2 concurrent vdevs) */
 
 
     WMI_MAX_EXT2_SERVICE
