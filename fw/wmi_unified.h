@@ -10239,6 +10239,9 @@ typedef enum {
 
     /* To enable/disable XPAN SAP + STA power optimization */
     WMI_PDEV_PARAM_XPAN_STA_PWRSAVE_ENABLE,
+
+    /** Beacon antenna for smart antenna */
+    WMI_PDEV_PARAM_SMART_ANTENNA_BEACON_ANTENNA,
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
