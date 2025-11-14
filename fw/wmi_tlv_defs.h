@@ -1530,6 +1530,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_nan_disable_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_nan_disable_cnf_fixed_param,
     WMITLV_TAG_STRUC_wmi_nan_disable_ind_fixed_param,
+    WMITLV_TAG_STRUC_wmi_cfr_capture_filter_resp_event_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2460,6 +2461,7 @@ typedef enum {
     OP(WMI_NAN_NEXT_DW_INFO_EVENTID) \
     OP(WMI_NAN_DISABLE_CNF_EVENTID) \
     OP(WMI_NAN_DISABLE_IND_EVENTID) \
+    OP(WMI_CFR_CAPTURE_FILTER_RESP_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -8167,6 +8169,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_FW_READY_IND_EVENTID);
 #define WMITLV_TABLE_WMI_WLAN_MODE_RESP_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_wlan_mode_resp_event_fixed_param, wmi_wlan_mode_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_MODE_RESP_EVENTID);
+
+/* CFR capture filter response event */
+#define WMITLV_TABLE_WMI_CFR_CAPTURE_FILTER_RESP_EVENTID(id,op,buf,len) \
+WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_cfr_capture_filter_resp_event_fixed_param, wmi_cfr_capture_filter_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_CFR_CAPTURE_FILTER_RESP_EVENTID);
 
 
 

@@ -2663,6 +2663,9 @@ typedef enum {
     WMI_AUDIO_AGGR_REPORT_STATISTICS_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_AUDIO),
     WMI_AUDIO_AGGR_SCHED_METHOD_EVENTID,
 
+    /** WMI events related to CFR capture response event */
+    WMI_CFR_CAPTURE_FILTER_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_CFR_CAPTURE),
+
     /** Vendor defined WMI events **/
     WMI_VENDOR_PDEV_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_VENDOR),
     WMI_VENDOR_VDEV_EVENTID,
@@ -47001,7 +47004,12 @@ typedef struct {
     A_UINT32 correlation_info_2;
     /* Bits 1:0:    TX status (if any); values defined in enum
     *               WMI_FRAME_TX_STATUS
-     * Bits 30:2:   reserved (set to 0x0)
+     * Bits 28:2:   reserved (set to 0x0)
+     * Bit  29:     frame sequence control valid flag:
+     *              The frame_seq_ctrl word / bitfields in
+     *              wmi_peer_cfr_capture_event_fixed_param must be ignored
+     *              unless this flag is set.
+     * Bit  30:     PS failed flag
      * Bit  31:     Status of the CFR capture of the peer
      *              1 (True) - Successful; 0 (False) - Not successful
      */
@@ -47079,7 +47087,40 @@ typedef struct {
      * Bits 16:31      reserved
      */
     A_UINT32 mcs_gi_info;
+
+    /*
+     * 802.11 Sequence Control field from the transmitted frame.
+     * Added for enhanced CFR correlation.
+     *
+     * Bits 0:3    Fragment number
+     * Bits 4:15   Sequence number
+     * Bits 16:31  Reserved (set to 0)
+     *
+     * Value is 0 if not available.
+     *
+     * NOTE: This field is appended for backward compatibility.
+     * Older hosts will ignore this field as they parse based on
+     * their known structure size.
+     */
+    A_UINT32 frame_seq_ctrl;
 } wmi_peer_cfr_capture_event_fixed_param;
+
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_TX      0x00000003
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_TX_S    0
+
+/* bits 28:2 are reserved */
+
+/* frame_seq_ctrl field is valid */
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_FRAME_SEQ_VALID   0x20000000
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_FRAME_SEQ_VALID_S 29
+
+/* Failed to capture CFR as peer is in power save mode */
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_PS_FAILED         0x40000000
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_PS_FAILED_S       30
+
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK                0x80000000
+#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK_S              31
+
 
 #define WMI_CFR_MCS_GET(mcs_gi_info) \
         WMI_GET_BITS(mcs_gi_info, 0, 8)
@@ -47092,6 +47133,57 @@ typedef struct {
 
 #define WMI_CFR_GI_TYPE_SET(mcs_gi_info, value) \
         WMI_SET_BITS(mcs_gi_info, 8, 8, value)
+
+/* Macros to get/set fragment number from frame_seq_ctrl field */
+#define WMI_CFR_FRAME_FRAG_NUM_GET(frame_seq_ctrl) \
+        WMI_GET_BITS(frame_seq_ctrl, 0, 4)
+#define WMI_CFR_FRAME_FRAG_NUM_SET(frame_seq_ctrl, value) \
+        WMI_SET_BITS(frame_seq_ctrl, 0, 4, value)
+
+/* Macros to get/set sequence number from frame_seq_ctrl field */
+#define WMI_CFR_FRAME_SEQ_NUM_GET(frame_seq_ctrl) \
+        WMI_GET_BITS(frame_seq_ctrl, 4, 12)
+#define WMI_CFR_FRAME_SEQ_NUM_SET(frame_seq_ctrl, value) \
+        WMI_SET_BITS(frame_seq_ctrl, 4, 12, value)
+
+/**
+ * CFR capture filter command response status codes
+ * These values are sent to host in wmi_cfr_capture_filter_resp_event
+ */
+typedef enum {
+    /** Configuration successful */
+    WMI_CFR_CAPTURE_FILTER_STATUS_SUCCESS        = 0,
+
+    /** Channel not specified for unassoc mode */
+    WMI_CFR_CAPTURE_FILTER_STATUS_NO_CHANNEL     = 1,
+
+    /** Invalid MAC ID */
+    WMI_CFR_CAPTURE_FILTER_STATUS_INVALID_MAC_ID = 2,
+
+    /** OCS channel request failed */
+    WMI_CFR_CAPTURE_FILTER_STATUS_OCS_FAILED     = 3,
+
+    /** vdev not found */
+    WMI_CFR_CAPTURE_FILTER_STATUS_NO_VDEV        = 4,
+
+    /** Invalid param */
+    WMI_CFR_CAPTURE_FILTER_STATUS_INVALID_PARAM  = 5,
+} wmi_cfr_capture_filter_status_t;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /* Status of the CFR capture filter configuration based on wmi_cfr_capture_filter_status_t */
+    A_UINT32 status; /* wmi_cfr_capture_filter_status_t */
+    A_UINT32 pdev_id;
+    /*
+     * Fields for peer CFR capture support -
+     * These fields are ONLY populated for peer capture responses.
+     * For filter capture responses, these remain 0.
+     */
+    A_UINT32 vdev_id;           /* VDEV ID (0 for filter capture) */
+    wmi_mac_addr mac_addr;      /* Peer MAC address (all zeros for filter capture) */
+    A_UINT32 request;           /* WMI_PEER_CFR_CAPTURE_ENABLE/DISABLE (0 for filter capture) */
+} wmi_cfr_capture_filter_resp_event_fixed_param;
 
 
 #define WMI_UNIFIED_CHAIN_PHASE_MASK 0x0000ffff
@@ -47170,15 +47262,6 @@ typedef struct {
     A_UINT32 agc_gain_tbl_index[WMI_MAX_CHAINS/WMI_CFR_AGC_GAIN_CHAINS_PER_U32];
 } wmi_peer_cfr_capture_event_phase_fixed_param;
 
-#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK      0x80000000
-#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_OK_S    31
-
-/* Failed to capture CFR as peer is in power save mode */
-#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_PS_FAILED      0x40000000
-#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_PS_FAILED_S    30
-
-#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_TX      0x00000003
-#define WMI_PEER_CFR_CAPTURE_EVT_STATUS_TX_S    0
 
 /**
  *  wmi_cold_boot_cal_data config flags
@@ -48051,12 +48134,27 @@ typedef struct {
      */
     A_UINT32 capture_count;
 
+    /* unassoc_capture_config:
+     * Bit 0:    Enable unassociated capture mode
+     * Bits 31:1 Reserved
+     */
+    A_UINT32 unassoc_capture_config;
+
+    /* Target channel frequency in MHz */
+    A_UINT32 unassoc_channel_mhz;
+
+    /* Target channel phy_mode */
+    A_UINT32 unassoc_phy_mode; /* WLAN_PHY_MODE */
 /*
  * A variable-length TLV array of wmi_cfr_filter_group_config will
  * follow this fixed_param TLV
  * wmi_cfr_filter_group_config filter_group_config[];
  */
 } wmi_cfr_capture_filter_cmd_fixed_param;
+
+/* CFR Capture macros to get/set the unassociated capture mode enable flag */
+#define WMI_CFR_UNASSOC_CAPTURE_EN_GET(x)        WMI_GET_BITS(x, 0, 1)
+#define WMI_CFR_UNASSOC_CAPTURE_EN_SET(x, value) WMI_SET_BITS(x, 0, 1, value)
 
 enum wmi_oem_data_evt_cause {
     WMI_OEM_DATA_EVT_CAUSE_UNSPECIFIED = 0,
