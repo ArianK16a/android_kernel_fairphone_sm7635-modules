@@ -5147,6 +5147,7 @@ int cam_req_mgr_schedule_request(
 	CAM_DBG(CAM_CRM, "link 0x%x req %lld, sync_mode %d",
 		sched_req->link_hdl, sched_req->req_id, sched_req->sync_mode);
 
+	memset(&task_data, 0, sizeof(task_data));
 	task_data.type = CRM_WORKQ_TASK_SCHED_REQ;
 	sched = (struct cam_req_mgr_sched_request_v2 *)&task_data.u;
 	sched->req_id = sched_req->req_id;
