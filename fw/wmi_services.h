@@ -741,6 +741,8 @@ typedef  enum  {
     WMI_SERVICE_DIRECT_REFILL_SUPPORT = 477, /* Indicates FW supports direct refill for RX buffer ring */
     WMI_SERVICE_NAN_STANDARD_MODE_SUPPORT = 478, /* Indicates FW supports NAN in standard mode (supplicant-based NAN architecture model) */
     WMI_SERVICE_CONC_2VDEV_DCS_STATS_SUPPORT = 479, /* Indicate FW support for collecting DCS stats for more than 1 vdev (max 2 concurrent vdevs) */
+    WMI_SERVICE_CFR_UNASSOC_RX_CAPTURE_SUPPORT = 480, /* Indicates FW supports RX-based unassociated CFR capture */
+    WMI_SERVICE_CFR_ASSOC_TX_CAPTURE_SUPPORT = 481, /* Indicates FW supports TX-based CFR capture */
 
 
     WMI_MAX_EXT2_SERVICE
