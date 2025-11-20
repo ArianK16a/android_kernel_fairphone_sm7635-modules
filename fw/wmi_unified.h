@@ -21565,7 +21565,7 @@ typedef struct {
     union {
         struct {
             A_UINT32 hw_peer_id_valid :1,
-                     is_llbi_peer:     1,
+                     is_11bi_peer     :1,
                      reserved         :30;
         };
         A_UINT32 flags;
@@ -29443,6 +29443,7 @@ typedef enum {
     WMI_PEER_CFR_CAPTURE_BW_80MHZ    = 2,
     WMI_PEER_CFR_CAPTURE_BW_160MHZ   = 3,
     WMI_PEER_CFR_CAPTURE_BW_80_80MHZ = 4,
+    WMI_PEER_CFR_CAPTURE_BW_320MHZ   = 5,
     WMI_PEER_CFR_CAPTURE_BW_MAX,
 } WMI_PEER_CFR_CAPTURE_BW;
 
