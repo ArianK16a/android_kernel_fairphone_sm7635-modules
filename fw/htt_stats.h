@@ -850,6 +850,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_HDS_PROF = 76,
 
+    /** HTT_DBG_EXT_STATS_OPTIONAL_CONFIGS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_stats_optional_configs_tlv
+     */
+    HTT_DBG_EXT_STATS_OPTIONAL_CONFIGS = 77,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -11958,6 +11966,84 @@ typedef struct {
     (((word) & 0xff000000) >> 24)
 #define HTT_STATS_HDS_PROF_SW_PROFILE_SET(word, value) \
     ((word) |= (((value) << 24) & 0xff000000))
+
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    union {
+        A_UINT32 flags;
+        struct {
+             /*
+              * bit 0: Dynamic ED CCA status flag
+              * bit 1: LPI status flag
+              * bit 2: Green Tx status flag
+              * bit 3: ANI status flag
+              * bit 4: Static ANI status flag
+              * bit 5: ANN Powerboost status flag
+              * bit 6: EANI status flag
+              * bit 7: Spur Mitigation status flag
+              * bit 8: Multigain RSSI status flag
+              */
+             A_UINT32
+                 is_dyn_cca_enabled:        1, /* bit 0 */
+                 is_lpi_enabled:            1, /* bit 1 */
+                 is_gtx_enabled:            1, /* bit 2 */
+                 is_ani_enabled:            1, /* bit 3 */
+                 is_static_ani_enabled:     1, /* bit 4 */
+                 is_ann_pbt_enabled:        1, /* bit 5 */
+                 is_e_ani_enabled:          1, /* bit 6 */
+                 is_spur_mit_enabled:       1, /* bit 7 */
+                 is_multigain_rssi_enabled: 1, /* bit 8 */
+
+                 reserved: 23; /* bits 31:9 */
+        };
+    };
+} htt_stats_optional_configs_tlv;
+
+#define HTT_STATS_OPT_CONF_GET_DYN_CCA(word) \
+    (((word) & 0x1) >> 0)
+#define HTT_STATS_OPT_CONF_SET_DYN_CCA(word, value) \
+    ((word) = ((word) & ~0x1) | (((value) & 0x1) << 0))
+
+#define HTT_STATS_OPT_CONF_GET_LPI(word) \
+    (((word) & 0x2) >> 1)
+#define HTT_STATS_OPT_CONF_SET_LPI(word, value) \
+    ((word) = ((word) & ~0x2) | (((value) & 0x1) << 1))
+
+#define HTT_STATS_OPT_CONF_GET_GTX(word) \
+    (((word) & 0x4) >> 2)
+#define HTT_STATS_OPT_CONF_SET_GTX(word, value) \
+    ((word) = ((word) & ~0x4) | (((value) & 0x1) << 2))
+
+#define HTT_STATS_OPT_CONF_GET_ANI(word) \
+    (((word) & 0x8) >> 3)
+#define HTT_STATS_OPT_CONF_SET_ANI(word, value) \
+    ((word) = ((word) & ~0x8) | (((value) & 0x1) << 3))
+
+#define HTT_STATS_OPT_CONF_GET_STATIC_ANI(word) \
+    (((word) & 0x10) >> 4)
+#define HTT_STATS_OPT_CONF_SET_STATIC_ANI(word, value) \
+    ((word) = ((word) & ~0x10) | (((value) & 0x1) << 4))
+
+#define HTT_STATS_OPT_CONF_GET_ANN_PBT(word) \
+    (((word) & 0x20) >> 5)
+#define HTT_STATS_OPT_CONF_SET_ANN_PBT(word, value) \
+    ((word) = ((word) & ~0x20) | (((value) & 0x1) << 5))
+
+#define HTT_STATS_OPT_CONF_GET_EANI(word) \
+    (((word) & 0x40) >> 6)
+#define HTT_STATS_OPT_CONF_SET_EANI(word, value) \
+    ((word) = ((word) & ~0x40) | (((value) & 0x1) << 6))
+
+#define HTT_STATS_OPT_CONF_GET_SPUR_MIT(word) \
+    (((word) & 0x80) >> 7)
+#define HTT_STATS_OPT_CONF_SET_SPUR_MIT(word, value) \
+    ((word) = ((word) & ~0x80) | (((value) & 0x1) << 7))
+
+#define HTT_STATS_OPT_CONF_GET_MULTIGAIN_RSSI(word) \
+    (((word) & 0x100) >> 8)
+#define HTT_STATS_OPT_CONF_SET_MULTIGAIN_RSSI(word, value) \
+    ((word) = ((word) & ~0x100) | (((value) & 0x1) << 8))
 
 
 typedef struct {
