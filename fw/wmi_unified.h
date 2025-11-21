@@ -37975,6 +37975,7 @@ typedef enum {
     WMI_REQUEST_CTRL_PATH_PDEV_CONN_STAT    = 21,
     WMI_REQUEST_CTRL_PATH_ML_RECONFIG_STAT  = 22,
     WMI_REQUEST_CTRL_PATH_STA_DAR_STAT      = 23,
+    WMI_REQUEST_ENHANCED_STAT               = 24,
 } wmi_ctrl_path_stats_id;
 
 typedef enum {
@@ -47222,6 +47223,59 @@ typedef struct {
     wmi_mac_addr mac_addr;      /* Peer MAC address (all zeros for filter capture) */
     A_UINT32 request;           /* WMI_PEER_CFR_CAPTURE_ENABLE/DISABLE (0 for filter capture) */
 } wmi_cfr_capture_filter_resp_event_fixed_param;
+
+
+/* max beacon bmiss bitmask array size, in 32-bit words */
+#define WMI_MAX_BCN_BMISS_HISTORY_LENGTH 8
+
+/* max MCS counters supported for enhance stats */
+#define WMI_ENHANCE_STATS_MAX_MCS_COUNTERS 16
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_beacon_stats */
+    A_UINT32 vdev_id; /* ID of the vdev these beacon stats are from */
+    /* length:
+     * Number of A_UINT32 elements within the bmiss_bitmask array which
+     * contain valid data.
+     * Array elements beyond this limit should be ignored.
+     */
+    A_UINT32 length;
+    /* bmiss_bitmask:
+     * Beacon miss bitmask indicating which beacons got missed from up to
+     * the last 255 expected beacons (32*8 bits).
+     * Only bmiss_bitmask[0] through bmiss_bitmask[length-1] (inclusive)
+     * contain valid data.
+     */
+    A_UINT32 bmiss_bitmask[WMI_MAX_BCN_BMISS_HISTORY_LENGTH];
+} wmi_vdev_beacon_stats;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_qdata_congestion_stats */
+    A_UINT32 vdev_id; /* ID of the vdev these congestion stats are from */
+    /* cca_busy_time:
+     * Number of milliseconds during which CCA is busy,
+     * out of total time spent on the channel
+     */
+    A_UINT32 cca_busy_time;
+    /* on_time:
+     * Total time in milliseconds for which we were on the channel
+     * and monitored
+     */
+    A_UINT32 on_time;
+} wmi_vdev_congestion_stats;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_data_stats */
+    A_UINT32 vdev_id; /* ID of the vdev these data stats are from */
+    /* Set of TX MCS counters for data PPDUs */
+    A_UINT32 tx_mcs_data_ppdu[WMI_ENHANCE_STATS_MAX_MCS_COUNTERS];
+    /* Set of TX BW counters for data PPDUs */
+    A_UINT32 tx_bw_data_ppdu[WMI_STATS_EXT_EVENT_VDEV_EXT_BW_COUNTERS_MAX];
+    /* Set of RX MCS counters for data PPDUs */
+    A_UINT32 rx_mcs_data_ppdu[WMI_ENHANCE_STATS_MAX_MCS_COUNTERS];
+    /* Set of RX BW counters for data PPDUs */
+    A_UINT32 rx_bw_data_ppdu[WMI_STATS_EXT_EVENT_VDEV_EXT_BW_COUNTERS_MAX];
+} wmi_vdev_data_stats;
 
 
 #define WMI_UNIFIED_CHAIN_PHASE_MASK 0x0000ffff
