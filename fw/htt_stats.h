@@ -3557,6 +3557,9 @@ typedef struct {
      */
     A_UINT32 smart_basic_trig_sch_histogram[HTT_MAX_NUM_SBT_INTR];
     A_UINT32 ru_alloc_mode_cnt[HTT_RU_ALLOC_NUM_MODES];
+    A_UINT32 mu_bar_pipeline_seq_cnt;
+    A_UINT32 mu_bar_pipeline_resume_cnt;
+    A_UINT32 mu_bar_pipeline_resume_fail_cnt;
 } htt_stats_tx_selfgen_cmn_stats_tlv;
 /* preserve old name alias for new name consistent with the tag name */
 typedef htt_stats_tx_selfgen_cmn_stats_tlv htt_tx_selfgen_cmn_stats_tlv;

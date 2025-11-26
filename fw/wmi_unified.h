@@ -19926,6 +19926,12 @@ typedef enum {
      */
     WMI_VDEV_PARAM_DSMPS_CONTROL,                         /* 0xCC */
 
+    /*
+     * Support P2P GO cancel long duration one-shot NOA
+     *      0 - Disable P2P GO cancel NOA feature - default value
+     *      1 - Enable P2P GO cancel NOA feature
+     */
+    WMI_VDEV_PARAM_SET_GO_CANCEL_NOA,                     /* 0xCD */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
