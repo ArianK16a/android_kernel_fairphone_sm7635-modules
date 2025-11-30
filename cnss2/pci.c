@@ -6223,6 +6223,49 @@ static void cnss_pci_mhi_reg_dump(struct cnss_pci_data *pci_priv)
 	cnss_pci_dump_shadow_reg(pci_priv);
 }
 
+int cnss_pci_recover_link_post_sol(struct cnss_pci_data *pci_priv)
+{
+	int ret = 0;
+	int retry = 0;
+	enum mhi_ee_type mhi_ee;
+
+	mutex_lock(&pci_priv->bus_lock);
+	ret = cnss_resume_pci_link(pci_priv);
+	if (ret) {
+		cnss_pr_err("Failed to resume PCI link post host sol, err= %d\n",
+			    ret);
+		mutex_unlock(&pci_priv->bus_lock);
+		return ret;
+	}
+	mutex_unlock(&pci_priv->bus_lock);
+
+retry:
+	/*
+	 * After PCIe link resumes, 20 to 400 ms delay is observerved
+	 * before device moves to RDDM.
+	 */
+	msleep(RDDM_LINK_RECOVERY_RETRY_DELAY_MS);
+	mhi_ee = mhi_get_exec_env(pci_priv->mhi_ctrl);
+	if (mhi_ee == MHI_EE_RDDM) {
+		del_timer(&pci_priv->dev_rddm_timer);
+		cnss_pr_info("Device in RDDM after link recovery, try to collect dump\n");
+		cnss_schedule_recovery(&pci_priv->pci_dev->dev,
+				       CNSS_REASON_RDDM);
+		return 0;
+	} else if (retry++ < RDDM_LINK_RECOVERY_RETRY) {
+		cnss_pr_dbg("Wait for RDDM after link recovery, retry #%d, Device EE: %d\n",
+			    retry, mhi_ee);
+		goto retry;
+	}
+
+	cnss_mhi_debug_reg_dump(pci_priv);
+	cnss_pci_bhi_debug_reg_dump(pci_priv);
+	cnss_pci_soc_scratch_reg_dump(pci_priv);
+	cnss_schedule_recovery(&pci_priv->pci_dev->dev,
+			       CNSS_REASON_TIMEOUT);
+
+	return 0;
+}
 int cnss_pci_recover_link_down(struct cnss_pci_data *pci_priv)
 {
 	int ret;
@@ -6256,6 +6299,11 @@ int cnss_pci_recover_link_down(struct cnss_pci_data *pci_priv)
 	if (ret) {
 		cnss_pr_err("Failed to resume PCI link, err = %d\n", ret);
 		del_timer(&pci_priv->dev_rddm_timer);
+		if (!cnss_pci_assert_host_sol(pci_priv)) {
+			mutex_unlock(&pci_priv->bus_lock);
+			return 0;
+		}
+		mutex_unlock(&pci_priv->bus_lock);
 		return ret;
 	}
 
@@ -6955,6 +7003,14 @@ static void cnss_dev_rddm_timeout_hdlr(struct timer_list *t)
 		return;
 
 	cnss_fatal_err("Timeout waiting for RDDM notification\n");
+
+	if (cnss_pci_check_link_status(pci_priv)) {
+		if (cnss_get_host_sol_value(pci_priv->plat_priv) == 1)
+			cnss_driver_event_post(pci_priv->plat_priv,
+					       CNSS_DRIVER_EVENT_RESUME_POST_SOL,
+				0, NULL);
+		return;
+	}
 
 	mhi_ee = mhi_get_exec_env(pci_priv->mhi_ctrl);
 	if (mhi_ee == MHI_EE_PBL)

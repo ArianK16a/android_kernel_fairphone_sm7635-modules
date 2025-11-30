@@ -259,6 +259,7 @@ static inline int cnss_pci_get_drv_connected(void *bus_priv)
 
 void cnss_mhi_controller_set_base(struct cnss_pci_data *pci_priv,
 				  phys_addr_t base);
+int cnss_pci_recover_link_post_sol(struct cnss_pci_data *pci_priv);
 int cnss_pci_check_link_status(struct cnss_pci_data *pci_priv);
 int cnss_suspend_pci_link(struct cnss_pci_data *pci_priv);
 int cnss_resume_pci_link(struct cnss_pci_data *pci_priv);
