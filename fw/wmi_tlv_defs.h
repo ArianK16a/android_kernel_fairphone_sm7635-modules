@@ -1496,7 +1496,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_energy_mgmt_eco_mode_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_assoc_mgmt_mpduq_params,
     WMITLV_TAG_STRUC_wmi_peer_assoc_mgmt_msduq_params,
-    WMITLV_TAG_STRUC_wmi_peer_assoc_hol_mdsuq_params,
+    WMITLV_TAG_STRUC_wmi_peer_assoc_hol_msduq_params,
+        /* for backwards-compatibility, maintain old name (with "mdsu" typo) */
+        WMITLV_TAG_STRUC_wmi_peer_assoc_hol_mdsuq_params =
+            WMITLV_TAG_STRUC_wmi_peer_assoc_hol_msduq_params,
     WMITLV_TAG_STRUC_wmi_peer_tid_rate_custom_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_co_located_chan_info,
     WMITLV_TAG_STRUC_wmi_pdev_npca_ap_cap_cmd_fixed_param,
@@ -1511,8 +1514,22 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_tpc_ie_power_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_coex_stats,
     WMITLV_TAG_STRUC_wmi_vdev_traffic_monitoring_cmd_fixed_param,
-    WMITLV_TAG_STRUC_wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES_EXT2,
+    WMITLV_TAG_STRUC_wmi_peer_assoc_cfp_params,
+    WMITLV_TAG_STRUC_wmi_pdev_set_tx_chainmask_comp_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_fw_ready_ind_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_wlan_mode_req_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_wlan_mode_resp_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_enable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_ctrl_config_param,
+    WMITLV_TAG_STRUC_wmi_nan_disc_band_config_param,
+    WMITLV_TAG_STRUC_wmi_nan_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_enable_rsp_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_next_dw_info_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_disable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_disable_cnf_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_disable_ind_fixed_param,
 } WMITLV_TAG_ID;
 /*
  * IMPORTANT: Please add _ALL_ WMI Commands Here.
@@ -2091,7 +2108,11 @@ typedef enum {
     OP(WMI_VDEV_GET_TPC_IE_POWER_CMDID) \
     OP(WMI_PEER_ASSOC_V2_CMDID) \
     OP(WMI_VDEV_TRAFFIC_MONITORING_CMDID) \
-    OP(WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID) \
+    OP(WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID) \
+    OP(WMI_WLAN_MODE_REQ_CMDID) \
+    OP(WMI_NAN_ENABLE_CMDID) \
+    OP(WMI_NAN_CONFIG_CMDID) \
+    OP(WMI_NAN_DISABLE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2432,6 +2453,13 @@ typedef enum {
     OP(WMI_PDEV_NPCA_AP_CAP_RESP_EVENTID) \
     OP(WMI_PDEV_MULTI_VDEV_AC_QUEUE_DEPTH_EVENTID) \
     OP(WMI_VDEV_TPC_IE_POWER_EVENTID) \
+    OP(WMI_PDEV_SET_TX_CHAINMASK_COMP_EVENTID) \
+    OP(WMI_FW_READY_IND_EVENTID) \
+    OP(WMI_WLAN_MODE_RESP_EVENTID) \
+    OP(WMI_NAN_ENABLE_RSP_EVENTID) \
+    OP(WMI_NAN_NEXT_DW_INFO_EVENTID) \
+    OP(WMI_NAN_DISABLE_CNF_EVENTID) \
+    OP(WMI_NAN_DISABLE_IND_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2931,7 +2959,7 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_operating_mode_params, operating_mode_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_mgmt_mpduq_params, mgmt_mpduq_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_mgmt_msduq_params, mgmt_msduq_params, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_hol_mdsuq_params, hol_mdsuq_params, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_hol_msduq_params, hol_mdsuq_params, WMITLV_SIZE_VAR)
 /* NOTE:
  * No further TLVs can be added to this message;
  * it is already at the target's WMI_MAX_NUM_TLVS limit (13).
@@ -2959,9 +2987,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ASSOC_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_operating_mode_params, operating_mode_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_mgmt_mpduq_params, mgmt_mpduq_params, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_mgmt_msduq_params, mgmt_msduq_params, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_hol_mdsuq_params, hol_mdsuq_params, WMITLV_SIZE_VAR)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_assoc_hol_msduq_params, hol_mdsuq_params, WMITLV_SIZE_VAR)\
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_npca_cap_params, peer_npca_cap_params, WMITLV_SIZE_VAR)\
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_create_mlo_params, create_mlo_params, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_create_mlo_params, create_mlo_params, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_assoc_cfp_params, wmi_peer_assoc_cfp_params, cfp_params, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_ASSOC_V2_CMDID);
 
@@ -4130,6 +4159,25 @@ WMITLV_CREATE_PARAM_STRUC(WMI_NAN_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_nan_oem_data_hdr, nan_oem_data_hdr, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, nan_oem_data_buffer, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_NAN_OEM_DATA_CMDID);
+
+/* NAN Enable Command */
+#define WMITLV_TABLE_WMI_NAN_ENABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_enable_cmd_fixed_param, wmi_nan_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_nan_ctrl_config_param, nan_ctrl_config, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_nan_disc_band_config_param, nan_disc_band_config, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_ENABLE_CMDID);
+
+/* NAN Config Command */
+#define WMITLV_TABLE_WMI_NAN_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_config_cmd_fixed_param, wmi_nan_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_nan_ctrl_config_param, nan_ctrl_config, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_nan_disc_band_config_param, nan_disc_band_config, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_CONFIG_CMDID);
+
+/* NAN Disable Command */
+#define WMITLV_TABLE_WMI_NAN_DISABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_disable_cmd_fixed_param, wmi_nan_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_DISABLE_CMDID);
 
 /* NAN Data Get Capabilities Cmd */
 #define WMITLV_TABLE_WMI_NDI_GET_CAP_REQ_CMDID(id,op,buf,len) \
@@ -5924,9 +5972,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTI_VDEV_GET_AC_QUEUE_DEPTH_CMDID);
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_TRAFFIC_MONITORING_CMDID);
 
 /* WMI command to control Dynamic Power Save - AP Assisting role config */
-#define WMITLV_TABLE_WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID(id,op,buf,len) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, wmi_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
-WMITLV_CREATE_PARAM_STRUC(WMI_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
+#define WMITLV_TABLE_WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, wmi_vdev_energy_mgmt_dps_assisting_role_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ENERGY_MGMT_DPS_ASSISTING_ROLE_CONFIG_CMDID);
+
+/* WMI cmd to specify the driver's mode of operation */
+#define WMITLV_TABLE_WMI_WLAN_MODE_REQ_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_wlan_mode_req_cmd_fixed_param, wmi_wlan_mode_req_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_MODE_REQ_CMDID);
 
 
 
@@ -6803,6 +6856,26 @@ WMITLV_CREATE_PARAM_STRUC(WMI_NAN_STARTED_CLUSTER_EVENTID);
 #define WMITLV_TABLE_WMI_NAN_JOINED_CLUSTER_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_joined_cluster_event_fixed_param, wmi_nan_joined_cluster_event_fixed_param_PROTOTYPE, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_NAN_JOINED_CLUSTER_EVENTID);
+
+/* NAN Enable Response Event */
+#define WMITLV_TABLE_WMI_NAN_ENABLE_RSP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_enable_rsp_event_fixed_param, wmi_nan_enable_rsp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_ENABLE_RSP_EVENTID);
+
+/* NAN Next DW Info Event */
+#define WMITLV_TABLE_WMI_NAN_NEXT_DW_INFO_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_next_dw_info_fixed_param, wmi_nan_next_dw_info_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_NEXT_DW_INFO_EVENTID);
+
+/* NAN Disable Confirm Event */
+#define WMITLV_TABLE_WMI_NAN_DISABLE_CNF_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_disable_cnf_fixed_param, wmi_nan_disable_cnf_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_DISABLE_CNF_EVENTID);
+
+/* NAN Disable Indication Event */
+#define WMITLV_TABLE_WMI_NAN_DISABLE_IND_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_disable_ind_fixed_param, wmi_nan_disable_ind_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_DISABLE_IND_EVENTID);
 
 /* Coex report antenna isolation event */
 #define WMITLV_TABLE_WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID(id,op,buf,len) \
@@ -8080,6 +8153,21 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SCAN_CACHE_RESULT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_multi_vdev_ac_queue_depth_event_fixed_param, wmi_pdev_multi_vdev_ac_queue_depth_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vdev_ac_info, vdev_ac_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_MULTI_VDEV_AC_QUEUE_DEPTH_EVENTID);
+
+#define WMITLV_TABLE_WMI_PDEV_SET_TX_CHAINMASK_COMP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_tx_chainmask_comp_event_fixed_param, wmi_pdev_set_tx_chainmask_comp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_TX_CHAINMASK_COMP_EVENTID);
+
+/* WMI Event to indicate Firmware is ready for mode configuration by host */
+#define WMITLV_TABLE_WMI_FW_READY_IND_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_fw_ready_ind_event_fixed_param, wmi_fw_ready_ind_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_FW_READY_IND_EVENTID);
+
+/* WMI Event to acknowledge the driver mode sent by host */
+#define WMITLV_TABLE_WMI_WLAN_MODE_RESP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_wlan_mode_resp_event_fixed_param, wmi_wlan_mode_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_MODE_RESP_EVENTID);
+
 
 
 #ifdef __cplusplus
