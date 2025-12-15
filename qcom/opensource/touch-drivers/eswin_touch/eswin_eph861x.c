@@ -2696,7 +2696,7 @@ static int eph_probe(struct comms_device *commsdevice, const struct comms_device
     }
 
     cnt = snprintf(&emkit_buf[0], 256,"touch_ic:%s\n", "862X");
-    cnt += snprintf(&emkit_buf[cnt], 256,"fw_ver:%02x%02x%02x\n",
+    cnt += snprintf(&emkit_buf[cnt], 256,"fw_ver:%u.%u.%u\n",
                 ephdata->ephdeviceinfo.application_version_major,ephdata->ephdeviceinfo.application_version_minor,ephdata->ephdeviceinfo.bootloader_version);
     cnt += snprintf(&emkit_buf[cnt], 256,"vendor:%s\n", "ESWIN");
     SetModuleName(MODULE_TOUCH, emkit_buf, __FUNCTION__);
