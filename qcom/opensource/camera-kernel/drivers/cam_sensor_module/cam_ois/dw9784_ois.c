@@ -1389,12 +1389,12 @@ static int dw9784_ois_af_drift(int targetpos){
 }
 #endif
 
-static ssize_t afdrift_show(struct class *class, struct class_attribute *attr, char *buf){
+static ssize_t afdrift_show(const struct class *class, const struct class_attribute *attr, char *buf){
     printk("ois afdrift_show enter");
     return 0;
 }
 
-static ssize_t afdrift_store(struct class *class, struct class_attribute *attr,
+static ssize_t afdrift_store(const struct class *class, const struct class_attribute *attr,
 							const char *buf, size_t count)
 {
 	int32_t AFDrift = 0, tagetPos = 0, accGain = 0;
@@ -1444,12 +1444,12 @@ static int dw9784_ois_acc_gain(struct cam_ois_ctrl_t *o_ctrl,int targetpos){
 }
 #endif
 
-static ssize_t accgain_show(struct class *class, struct class_attribute *attr, char *buf){
+static ssize_t accgain_show(const struct class *class, const struct class_attribute *attr, char *buf){
     printk("ois accgain_show enter");
     return 0;
 }
 
-static ssize_t accgain_store(struct class *class, struct class_attribute *attr,
+static ssize_t accgain_store(const struct class *class, const struct class_attribute *attr,
                             const char *buf, size_t count){
     sscanf(buf,"%x %x",&macroDAC,&infinityDAC);
     printk("ois gccgain_store macroDAC =0x%x,infinityDAC=0x%x",macroDAC,infinityDAC);
@@ -1514,12 +1514,12 @@ example: echo 0x01 0x0009 > oisreg
 cat oisreg
 ****************************************/
 char reg_data_buff[32];
-static ssize_t oisreg_show(struct class * class,struct class_attribute * attr,char * buf){
+static ssize_t oisreg_show(const struct class * class,const struct class_attribute * attr,char * buf){
     strcpy(buf,reg_data_buff);
     printk("oisreg_show %s",reg_data_buff);
     return sizeof(reg_data_buff);
 }
-static ssize_t oisreg_store(struct class *class, struct class_attribute *attr,
+static ssize_t oisreg_store(const struct class *class, const struct class_attribute *attr,
                             const char *buf, size_t count){
     struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
     int flag =0;
@@ -1544,7 +1544,7 @@ static char data_buff[10];
 add by jinghuang
 show:
 ****************************************/
-static ssize_t oisops_show(struct class *class, struct class_attribute *attr, char *buf){
+static ssize_t oisops_show(const struct class *class, const struct class_attribute *attr, char *buf){
 	uint32_t size =0;
     printk("ois oisops_show enter");
 	size = strlen(data_buff);
@@ -1563,7 +1563,7 @@ store cmd:
 '6'---->dw9784_fw_dump //fw dump for check
 '7'---->dw9784_fw_force_enable  //force update the fw
 ****************************************/
-static ssize_t oisops_store(struct class *class, struct class_attribute *attr,
+static ssize_t oisops_store(const struct class *class, const struct class_attribute *attr,
                             const char *buf, size_t count){
     struct cam_ois_ctrl_t *o_ctrl = g_o_ctrl;
     char cmd_buff[2];
@@ -1616,7 +1616,7 @@ int ois_creat_sysfs(struct cam_ois_ctrl_t *o_ctrl){
     printk("ois ois_creat_sysfs start");
     if(!ois_debug_class){
         printk("ois ois_creat_sysfs!");
-        ois_debug_class = class_create(THIS_MODULE,"debug_ois");
+        ois_debug_class = class_create("debug_ois");
         ret = class_create_file(ois_debug_class,&class_attr_oisops);
         if(ret<0){
             printk("create oisops failed,ret %d",ret);

@@ -712,7 +712,7 @@ static ssize_t CamOTPB_store(struct device *dev,struct  device_attribute *attr,c
         sprintf(CamOTPB,"%s","1");
     }else{
         printk("otp flag = 0\n");
-        sprintf(CamOTPB,"%s%","0");
+        sprintf(CamOTPB,"%s","0");
     }
 
     return count;
@@ -798,7 +798,7 @@ int deviceinfo_init(void)
 {
     int ret = -1;
 
-    deviceinfo_class = class_create(THIS_MODULE, "deviceinfo");
+    deviceinfo_class = class_create("deviceinfo");
     if (IS_ERR(deviceinfo_class)) {
         pr_err("Failed to create device info class!\n");
         return -ENOMEM;

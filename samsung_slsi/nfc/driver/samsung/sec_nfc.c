@@ -1115,14 +1115,14 @@ typedef struct i2c_driver sec_nfc_driver_type;
 #define SEC_NFC_INIT(driver)    i2c_add_driver(driver)
 #define SEC_NFC_EXIT(driver)    i2c_del_driver(driver)
 
-//#if LINUX_VERSION_CODE < KERNEL_VERSION(6,1,0)
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,1,0)
 static int sec_nfc_probe(struct i2c_client *client,
 							const struct i2c_device_id *id)
 
 
-//#else
-//static int sec_nfc_probe(struct i2c_client *client)
-//#endif
+#else
+static int sec_nfc_probe(struct i2c_client *client)
+#endif
 
 {
     int ret = 0;

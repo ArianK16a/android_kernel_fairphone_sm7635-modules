@@ -1260,7 +1260,7 @@ more_watermarks:
 					CE_state->id,
 					CE_state->dest_ring->nentries_mask,
 					CE_state->dest_ring->sw_index,
-					CE_DEST_RING_READ_IDX_GET(scn,
+					(unsigned int) CE_DEST_RING_READ_IDX_GET(scn,
 							  CE_state->ctrl_addr));
 			}
 		}
@@ -1282,7 +1282,7 @@ more_watermarks:
 					CE_state->src_ring->sw_index,
 					CE_state->src_ring->hw_index,
 					CE_state->src_ring->write_index,
-					CE_SRC_RING_READ_IDX_GET(scn,
+					(unsigned int) CE_SRC_RING_READ_IDX_GET(scn,
 							 CE_state->ctrl_addr));
 			}
 		}

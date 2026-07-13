@@ -575,7 +575,7 @@ int btfmcodec_hwep_prepare(struct btfmcodec_data *btfmcodec, uint32_t sampling_r
 	if (dai_drv && dai_drv->dai_ops && dai_drv->dai_ops->hwep_prepare) {
 		ret = dai_drv->dai_ops->hwep_prepare((void *)hwep_info, sampling_rate,
 						      direction, id);
-		BTFMCODEC_ERR("%s: hwep info %d", __func__, hwep_info->flags);
+		BTFMCODEC_ERR("%s: hwep info %lu", __func__, hwep_info->flags);
 		if (ret == 0 && test_bit(BTADV_AUDIO_MASTER_CONFIG, &hwep_info->flags)) {
 			ret = btfmcodec_configure_master(btfmcodec, (uint8_t)id);
 			if (ret < 0) {
@@ -851,15 +851,15 @@ int btfm_register_codec(struct hwep_data *hwep_info)
 	BTFMCODEC_INFO("btfmcodec address :%p", btfmcodec);
 	BTFMCODEC_INFO("HWEPINFO address:%p", hwep_info);
 	BTFMCODEC_INFO("btfmcodec_dev INFO address:%p", btfmcodec->btfmcodec_dev);
-	BTFMCODEC_INFO("before wq_hwep_shutdown:%p", btfmcodec_dev->wq_hwep_shutdown);
-	BTFMCODEC_INFO("before wq_prepare_bearer:%p", btfmcodec_dev->wq_prepare_bearer);
+	BTFMCODEC_INFO("before wq_hwep_shutdown:%p", &btfmcodec_dev->wq_hwep_shutdown);
+	BTFMCODEC_INFO("before wq_prepare_bearer:%p", &btfmcodec_dev->wq_prepare_bearer);
 	INIT_WORK(&btfmcodec_dev->wq_hwep_shutdown, btfmcodec_wq_hwep_shutdown);
 	INIT_WORK(&btfmcodec_dev->wq_prepare_bearer, btfmcodec_wq_prepare_bearer);
 	INIT_WORK(&btfmcodec_dev->wq_hwep_configure, btfmcodec_wq_hwep_configure);
-	BTFMCODEC_INFO("after wq_hwep_shutdown:%p", btfmcodec_dev->wq_hwep_shutdown);
-	BTFMCODEC_INFO("after wq_prepare_bearer:%p", btfmcodec_dev->wq_prepare_bearer);
-	BTFMCODEC_INFO("btfmcodec_wq_prepare_bearer:%p", btfmcodec_wq_prepare_bearer);
-	BTFMCODEC_INFO("btfmcodec_wq_hwep_shutdown:%p", btfmcodec_wq_hwep_shutdown);
+	BTFMCODEC_INFO("after wq_hwep_shutdown:%p", &btfmcodec_dev->wq_hwep_shutdown);
+	BTFMCODEC_INFO("after wq_prepare_bearer:%p", &btfmcodec_dev->wq_prepare_bearer);
+	BTFMCODEC_INFO("btfmcodec_wq_prepare_bearer:%p", &btfmcodec_wq_prepare_bearer);
+	BTFMCODEC_INFO("btfmcodec_wq_hwep_shutdown:%p", &btfmcodec_wq_hwep_shutdown);
 
 	if (isCpSupported()) {
 		if (!strcmp(hwep_info->driver_name, "btfmslim"))

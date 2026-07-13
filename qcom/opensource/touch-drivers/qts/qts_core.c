@@ -1174,7 +1174,7 @@ static int qts_handle_trusted_touch_pvm(struct qts_data *qts_data, int value)
 		break;
 
 	default:
-		pr_err("unsupported value: %lu\n", value);
+		pr_err("unsupported value: %d\n", value);
 		err = -EINVAL;
 		break;
 	}
@@ -1385,7 +1385,7 @@ static ssize_t trusted_touch_enable_store(struct kobject *kobj, struct kobj_attr
 	if (!atomic_read(&qts_data->trusted_touch_initialized))
 		return -EIO;
 
-	pr_info("TUI trusted_touch_enable:%d\n", value);
+	pr_info("TUI trusted_touch_enable:%lu\n", value);
 
 #ifdef CONFIG_ARCH_QTI_VM
 	err = qts_handle_trusted_touch_tvm(qts_data, value);
@@ -1753,7 +1753,7 @@ static void qts_ts_register_for_panel_events(struct qts_data *qts_data)
 		return;
 	}
 
-	pr_debug("registered for panel notifications panel: 0x%x\n", qts_data->panel);
+	pr_debug("registered for panel notifications panel: %p\n", qts_data->panel);
 
 	qts_data->notifier_cookie = cookie;
 }

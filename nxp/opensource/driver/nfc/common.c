@@ -252,7 +252,7 @@ int nfc_misc_register(struct nfc_dev *nfc_dev,
 		       ret);
 		return ret;
 	}
-	nfc_dev->nfc_class = class_create(THIS_MODULE, classname);
+	nfc_dev->nfc_class = class_create(classname);
 	if (IS_ERR(nfc_dev->nfc_class)) {
 		ret = PTR_ERR(nfc_dev->nfc_class);
 		pr_err("NxpDrv: %s: failed to register device class ret %d\n", __func__,

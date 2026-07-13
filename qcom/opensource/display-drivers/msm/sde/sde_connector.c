@@ -218,7 +218,7 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	}
 	global_bl_lvl = bl_lvl;
 	global_brightness = brightness;
-#elif
+#else
 
 	/* map UI brightness into driver backlight level with rounding */
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
@@ -274,7 +274,7 @@ static int sde_backlight_device_get_brightness(struct backlight_device *bd)
 
 	brightness = bd->props.brightness;
 	return brightness;
-#elif
+#else
 	return 0;
 #endif
 }

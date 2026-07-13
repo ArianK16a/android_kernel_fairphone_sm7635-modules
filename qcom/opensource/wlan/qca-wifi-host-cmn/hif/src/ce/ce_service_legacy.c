@@ -483,7 +483,7 @@ more_data:
 		if (more_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
 			goto more_data;
 		} else {
-			hif_err("Potential infinite loop detected during Rx processing nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%x",
+			hif_err("Potential infinite loop detected during Rx processing nentries_mask:0x%x sw read_idx:0x%x hw read_idx:0x%llx",
 				  nentries_mask,
 				  ce_state->dest_ring->sw_index,
 				  CE_DEST_RING_READ_IDX_GET(scn, ctrl_addr));

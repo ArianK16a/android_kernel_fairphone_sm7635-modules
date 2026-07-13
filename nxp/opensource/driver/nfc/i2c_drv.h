@@ -43,8 +43,7 @@ struct i2c_dev {
 };
 
 long nfc_i2c_dev_ioctl(struct file *pfile, unsigned int cmd, unsigned long arg);
-int nfc_i2c_dev_probe(struct i2c_client *client,
-		      const struct i2c_device_id *id);
+int nfc_i2c_dev_probe(struct i2c_client *client);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 1, 0))
 void nfc_i2c_dev_remove(struct i2c_client *client);
 #else

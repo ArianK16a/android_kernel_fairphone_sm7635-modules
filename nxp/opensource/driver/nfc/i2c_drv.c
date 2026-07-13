@@ -179,7 +179,7 @@ int i2c_read(struct nfc_dev *nfc_dev, char *buf, size_t count, int timeout)
 	memset(buf, 0x00, count);
 	/* Read data */
 	ret = i2c_master_recv(nfc_dev->i2c_dev.client, buf, count);
-	NFCLOG_IPC(nfc_dev, false, "%s of %d bytes, ret %d", __func__, count,
+	NFCLOG_IPC(nfc_dev, false, "%s of %zu bytes, ret %d", __func__, count,
 								ret);
 	if (ret <= 0) {
 		pr_err("NxpDrv: %s: returned %d\n", __func__, ret);
@@ -224,7 +224,7 @@ int i2c_write(struct nfc_dev *nfc_dev, const char *buf, size_t count,
 		count = MAX_DL_BUFFER_SIZE;
 
 	pr_debug("NxpDrv: %s: writing %zu bytes.\n", __func__, count);
-	NFCLOG_IPC(nfc_dev, false, "%s sending %d B", __func__, count);
+	NFCLOG_IPC(nfc_dev, false, "%s sending %zu B", __func__, count);
 
 	for (i = 0; i < disp_len; i++)
 	    NFCLOG_IPC(nfc_dev, false, " %02x", buf[i]);
@@ -333,7 +333,7 @@ static const struct file_operations nfc_i2c_dev_fops = {
 #endif
 };
 
-int nfc_i2c_dev_probe(struct i2c_client *client, const struct i2c_device_id *id)
+int nfc_i2c_dev_probe(struct i2c_client *client)
 {
 	int ret = 0;
 	struct nfc_dev *nfc_dev = NULL;

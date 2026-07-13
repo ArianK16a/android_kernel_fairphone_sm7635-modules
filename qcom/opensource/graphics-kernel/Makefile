@@ -12,6 +12,8 @@ KBUILD_OPTIONS += KGSL_PATH=$(KGSL_MODULE_ROOT)
 KBUILD_EXTRA_SYMBOLS := \
     $(OUT_DIR)/../sm7635-modules/qcom/opensource/mm-drivers/hw_fence/Module.symvers
 
+KBUILD_OPTIONS += KBUILD_EXTRA_SYMBOLS="$(KBUILD_EXTRA_SYMBOLS)"
+
 all: modules
 
 modules_install:
