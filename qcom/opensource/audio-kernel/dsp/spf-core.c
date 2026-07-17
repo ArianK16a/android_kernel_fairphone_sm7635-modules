@@ -184,6 +184,10 @@ bool spf_core_is_apm_ready(int timeout_ms)
 			break;
 
 		usleep_range(50000, 50050);
+		if (!time_after(timeout, jiffies)) {
+			ret = false;
+			break;
+		}
 	}
 
 	mutex_unlock(&core->lock);
